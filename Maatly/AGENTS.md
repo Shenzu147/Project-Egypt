@@ -11,25 +11,25 @@
 ## Estado actual (01/11/2026)
 
 - **Maatly** es una app personal de finanzas en español: ingresos y gastos, planes de ahorro, cierres de mes, sobregasto, calendario, tablero de actividades y asistente IA.
-- **Trunk:** `Maatly_v0.44.html` — 896.797 B / 10.707 líneas, MD5 `9BF3860A…`, `VER_APP = 'v0.44'`.
+- **Trunk:** `Maatly_v0.45.html` — 895.497 B / 10.692 líneas, MD5 `6F7A9CD8…`, `VER_APP = 'v0.45'`.
+- **Raíz:** v0.44 (padre inmediato, en git) + v0.45 (vivo). v0.42 y v0.43 ya no están en la raíz: v0.43 vive en `respaldo/` con el cierre de la era v0.42.
 - **Forma:** un archivo HTML único con CSS y JavaScript en línea; los datos viven en `localStorage`. Sin build ni dependencias locales.
-- **Repo:** git en `C:\Users\jdeb1\Project Egypt` (raíz); el proyecto vive en `Maatly/`. Último commit: `V.0.1` (v0.43 + plan de CDN).
+- **Repo:** git en `C:\Users\jdeb1\Project Egypt` (raíz); el proyecto vive en `Maatly/`. **Git es el respaldo** (regla del plan 51): cada versión se commitea, nunca reescribir la historia.
 - **Destino:** Supabase (PostgreSQL + Auth con Google), cuentas individuales que empiezan vacías, y modo sin conexión con IndexedDB y cola de sincronización.
 - **Planes:** `.kilo/plans/AAAA-MM-DD-tema.md`. Sin plan no hay código (`require_plan_for_code: true`).
 - **Memoria:** `BITACORA.md` guarda el detalle por fecha/plan y se lee bajo demanda (`grep`). Este archivo se mantiene compacto (< ~150 líneas). El comando `/memoria` (`opencode.json`) sincroniza ambos al cerrar sesión.
 
 ## Cambios recientes
 
-- **01/11 · v0.44** — CSP corregida (va al inicio del `<head>`; `frame-src`, `connect-src` y `font-src` completos), `VER_APP` v0.44, fix del arranque en perfil limpio (la demo se sembraba antes de `MONEDAS`) y `.lnk` re-apuntado. Detalle: BITACORA, plan 50.
+- **01/11 · v0.45** — card «Te queda» simplificada: fuera las píldoras de tramo y de renovación; quedan monto, `~Bs.`, Débito del tramo y Meta. Ficha ⓘ reescrita. Plan 52.
+- **01/11 · v0.44** — CSP corregida (va al inicio del `<head>`; `frame-src`, `connect-src` y `font-src` completos), `VER_APP` v0.44, fix del arranque en perfil limpio (la demo se sembraba antes de `MONEDAS`) y `.lnk` re-apuntado. Plan 50.
 - **31/10 · v0.43** — versiones CDN fijadas + SRI `sha384` (7/7 verificados) + primera CSP. Plan `2026-11-01-cdn-seguridad`.
 - **31/10 · v0.42** — cadencia Mensual/Quincenal/Semanal, renovación con día exacto y aviso N días antes, fix de `finanzasCfgSet`. Plan 49.
-- **31/10 · v0.25.50** — filtros de Movimientos/Actividades y ventana 1M/3M/12M en «Gasto por categoría». Plan 48.
 
 ## Pendientes
 
-- **Plan `2026-11-01-card-te-queda`** (v0.44 → v0.45): quitar la etiqueta de período y el aviso de renovación de la card «Te queda»; conservar monto, débito del tramo y meta.
-- **QA acumulado era v0.39→v0.44**: checklists en BITACORA (planes 49 y 50), incluida la prueba manual de CSP, adjuntos PDF, calendario, agente y notificaciones.
-- **Deudas:** commit de v0.43/v0.44 y de los planes nuevos · rotar la API key de Gemini · talón 2 (accessors raw e `historialUltimate`) · talón 3 (8 CDNs: sin red la app muere) · piloto Supabase (schema v1 con `ingresos_hist`, retiros con `modo`, `kanbanEstados` con `esCierre`, preferencias JSONB + Google OAuth + Import como puente).
+- **QA acumulado era v0.39→v0.45**: checklists en BITACORA (planes 49, 50 y 52), incluida la prueba manual de CSP, adjuntos PDF, calendario, agente y notificaciones.
+- **Deudas:** rotar la API key de Gemini · talón 2 (accessors raw e `historialUltimate`) · talón 3 (8 CDNs: sin red la app muere) · piloto Supabase (schema v1 con `ingresos_hist`, retiros con `modo`, `kanbanEstados` con `esCierre`, preferencias JSONB + Google OAuth + Import como puente).
 
 ## Principios de arquitectura (no negociables)
 

@@ -8,6 +8,9 @@ Registro cronológico del trabajo con el agente. La memoria compacta (`AGENTS.md
 
 ## ⏳ Pendientes activos (índice rápido)
 
+- **QA de la «Card Te queda simplificada» (v0.45)** (01/nov) → plan 52: se retiraron las 2 píldoras informativas de la card (índigo de tramo `lblTramoKpi` + esmeralda de renovación `lblRenovaKpi`), conservando monto, `~Bs.`, la barra **Débito del tramo** y la pill **Meta**. La lente del tramo sigue viva en `estadoPeriodo` (alimenta el débito) y el aviso de renovación en 🔔 Notificaciones. Ficha ⓘ `kDisp` reescrita. Huella **`6F7A9CD8…`** (895.497 B / 10.692 líneas). Checklist abajo, en la entrada del plan 52.
+- **Estado del trunk** (01/nov, lo más reciente): commit `4edebe3 «Limpieza»` (del usuario) **sacó `Maatly_v0.42.html` de la raíz** y **archivó `Maatly_v0.43.html` en `respaldo/`** (git mv) — la raíz queda con v0.44 (padre) y v0.45 (trunk vivo); `respaldo/` = `Maatly_v0.42_cierre31oct.html` + `Maatly_v0.43.html`.
+
 - **QA de la «CDN seguro + CSP» (v0.43 → v0.44)** (01/nov) → plan 50: v0.43 fijó versiones + SRI (7/7 verificados) y estrenó CSP; la revisión con sonda real destapó la CSP colocada tarde, `frame-src`/`connect-src`/`font-src` incompletos, `VER_APP` sin subir y un **bug heredado de arranque** (la demo se sembraba antes de `MONEDAS` y abortaba el script en perfil limpio). v0.44 corrige todo eso sin tocar fórmulas ni UI. Huella **`9BF3860A…`** (896.797 B / 10.707 líneas). Checklist abajo, en la entrada del plan 50. 🔜 Siguiente: plan `2026-11-01-card-te-queda` (re-apuntado a v0.44 → v0.45).
 - **QA ACUMULADO «Era v0.39→v0.42»** (31/oct, lo más reciente) → plan 49: las rondas de HOY ejecutadas encadenadas sin escritura hasta este cierre — **v0.40 Moneda canónica** (+.1×3/.4: base USD de los datos, visualización aparte, `mFmt`/`mBase`, tasa = sola referencia local, toasts en commit) · **v0.41 Cadencia** (+.41.2 fichas: lente quincenal, fondeo híbrido, arrastre, `estadoMesCore` único, Kanban entra al embudo de sobregasto) · **v0.42 Renovación** (selector Mensual/Quincenal/Semanal + día de cobro exacto + aviso N días antes por Notificaciones + píldora esmeralda del hero) · **fix de `finanzasCfgSet`** (borraba `equivTeQueda`/`localRef` en cada guardado del perfil). Trunk **renombrado a `Maatly_v0.42.html`** al cierre (petición del usuario; VER_APP v0.42; `.lnk` re-escrito + verificado) — huella final `116D9626…` (894.962 B / 10.701 líneas) + respaldo byte-idéntico `respaldo/Maatly_v0.42_cierre31oct.html`. El detalle técnico completo de la era vive en el roadmap `C:\Users\jdeb1\.opencode\plan\maatly-v0.39-roadmap.md`; checklist abajo, en la entrada del plan 49.
 - **QA ACUMULADO «Rondas v0.25.34–.50»** (30–31/oct, lo más reciente) → plan 48: 13 rondas en TRES sesiones encadenadas SIN escritura hasta este cierre — .34 **zoom gentil** (`--m-soft`) · .35 **pausa Kanban + revisión de mes** · .36 **«Historia»** (extinta Análisis fundida: 2 sub-vistas, pie reales, ▲▼ + badge %) · .37 **«Evolución a medida»** (filtro unificado + eje semáforo + desglose con buscador/mes + card ahorro/racha) · .38 **ventana emergente del filtro + «¿Qué veo?» (ⓘ)** · .39–.45 **ⓘ del producto → desnudo → opacidad → talla −25% + K-SEL** (dropdowns temáticos) · **.46–.47 purga de emojis** (solo la función de Notas queda; entidades HTML `&#128197;`/`&#127991;` incluidas) · **.48 «Textos y símbolos»** (Saldo · subtítulos gemelos con mes dinámico · gasto `-$` · subtítulos del widget Movimientos) · **.49 «Planes»** (regla visibilidad en curso/cumplidas · barra semáforo HSL · botones del pozo dentro de «= Disponible del pozo» + renombre «Apartar al pozo») · **.50 «Filtros»** (chips Todos·Ingresos·Gastos en Movimientos · sync Kanban→chips del widget vía `kbGuardarEstados` · ventana de promedio 1 M·3 M·12 M en «Gasto por categoría»). Cero claves de storage nuevas. Trunk final **v0.25.50** (`92484E4A…`, 801.978 B / 9.559 líneas) + respaldo de cierre byte-idéntico `respaldo/Maatly_v0.25.50_cierre31oct.html`. Checklist abajo, en la entrada del plan 48.
@@ -96,6 +99,28 @@ Primera pasada de seguridad de dependencias: versiones **fijadas** (Tailwind `3.
 5. **Agente y notificaciones** (si están configurados): una llamada al modelo y un aviso de prueba llegan (OpenRouter/Gemini/Z.ai, Telegram, ntfy).
 6. **Gráficas / GridStack / XLSX**: Chart.js, arrastre del panel y exportación funcionan con la CSP activa.
 7. **Lanzador**: doble clic en `Maatly.lnk` abre v0.44 en ventana propia de Edge.
+
+---
+
+## 01/11/2026 — plan 52 «Simplificar la card Te queda (v0.45)» + CIERRE ✅
+
+Plan `2026-11-01-card-te-queda.md` re-apuntado a v0.44 → v0.45 y ejecutado. Petición: la card «Te queda» del hero pierde su información redundante; solo era presentación (lógica y consumo intactos).
+
+- **Fuera** (4 toques): `#lblTramoKpi` (píldora índigo «Q2 · 16–31 oct», HTML) · `#lblRenovaKpi` (píldora esmeralda «Te renuevan…», HTML) · los 2 bloques de `actualizarKPIs` que las pintaban (JS ~22 líneas netas) · su descripción en la ficha ⓘ `WIDGET_INFO.kDisp`.
+- **Se queda**: monto `Te queda`, línea `~ Bs.` (equivalencia), la barra **Débito del tramo** con su semáforo, la pill **Meta Bs · %** y la colación `data-hmin 140`.
+- **Intacto (no tocado)**: `estadoPeriodo`/`epHoy` (la lente del tramo sigue alimentando la barra) y `renovacionProxima()` (la usa 🔔 Notificaciones vía `ntfTickDinero` con dedup). Cero cambios de fórmulas; **cero claves de storage nuevas**.
+- **Verificación**: `node --check` **5/5** · IDs **397/397** (solo faltan los 2 retirados, 0 nuevos) · diff v0.44→v0.45 = **+5/−20** · SRI **7/7 OK** · sonda real (Edge headless + CDP, perfil limpio): arranque completo, firma v0.45, **0 excepciones / 0 violaciones CSP**, débito visible (18%), meta visible, montos del demo bien.
+- Trunk **`Maatly_v0.45.html`** — huella **`6F7A9CD8DBC7402E3904B0F55C6F9730`** (895.497 B / 10.692 líneas). `VER_APP = 'v0.45'` (el toast de versión nueva saldrá natural).
+- **Contexto de día (commit `4edebe3` del usuario)**: la raíz quedó con solo las versiones vivas — v0.44 y v0.45; v0.42 salió del disco y v0.43 se archivó en `respaldo/` junto al cierre de la era v0.42.
+
+### 📋 Checklist QA (v0.45) — una pasada
+
+1. **Hero** (Inicio): la card muestra `Te queda` → monto → `~Bs.` (si la equivalencia está activa) → **Débito del tramo** con barra y % → **Meta Bs · %**. Sin huecos ni restos de píldoras.
+2. **Barra de débito** sigue funcionando: registra un gasto pequeño y verifica que sube y cambia de color (verde→ámbar→rojo).
+3. **ⓘ de la card**: la ficha ya no menciona píldoras; habla del débito del tramo y redirige la renovación a 🔔.
+4. **Renovación**: con cadencia configurada y N≥1, el aviso sigue llegando **solo** por la campana de Notificaciones.
+5. **Ajustes → Datos**: «Versión de la app: v0.45»; la fila Versión del XLSX igual.
+6. **Móvil 375px**: la card no queda corta (min-altura 140 y crece con el contenido).
 
 ---
 
