@@ -793,7 +793,7 @@
                 </h3>
                 <button onclick="aaDlgCerrar('modalInfoWidget')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors p-1 flex-shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
-            <p id="iwTexto" class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mt-3"></p>
+            <div id="iwTexto" class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mt-3 space-y-2"></div>
             <div class="flex justify-end mt-5">
                 <button onclick="aaDlgCerrar('modalInfoWidget')" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cerrar</button>
             </div>
@@ -1366,8 +1366,14 @@
                         </button>
                     </div>
 
-                    <div id="contenedorControlesInicio">
-                        <button id="btnEditGrid" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/50 dark:hover:text-indigo-400 font-semibold rounded-lg text-sm transition-colors flex items-center gap-2">
+                    <div id="contenedorControlesInicio" class="flex items-center gap-2">
+                        <!-- v0.46b: fila horizontal alineada con las pestañas (el padre centra con sm:items-center);
+                             «Predeterminado» a la IZQUIERDA de «Personalizar/Guardar» (v0.48); el botón «Ajustar» se retiró en v0.49 a petición del usuario (el piso de carga y los fixes de persistencia del fit quedan). -->
+                        <button id="btnResetWidgets" class="hidden px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-900 font-semibold rounded-lg text-sm transition-colors flex items-center gap-2" title="Vuelve al diseño de fábrica del tablero — descarta tu arreglo guardado">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path></svg>
+                            <span class="hidden sm:inline">Predeterminado</span>
+                        </button>
+                        <button id="btnEditGrid" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/50 dark:hover:text-indigo-400 font-semibold rounded-lg text-sm transition-colors flex items-center gap-2" title="Guarda tu diseño personalizado del panel">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             <span id="txtEditGrid" class="hidden sm:inline">Personalizar</span>
                         </button>
@@ -1737,7 +1743,7 @@
                             <span class="p-3 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-2xl inline-flex items-center justify-center"><svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0"></path></svg></span>
                             <div class="flex-1 min-w-0">
                                 <h3 class="font-bold text-slate-800 dark:text-white text-[15px]">Tu perfil</h3>
-                                <p class="text-xs text-slate-400 mt-1">Tu nombre, guardado solo en este dispositivo.</p>
+                                <p class="text-xs text-slate-400 mt-1">Tu nombre, tu país, tu idioma, tu tipo de perfil y tu estilo de consejo.</p>
                             </div>
                             <svg class="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
                         </div>
@@ -1795,17 +1801,69 @@
                                     M
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-1">Tu nombre</label>
+                                    <label id="lblTuNombre" class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-1">Tu nombre</label>
                                     <input type="text" id="inputNombreUsuario" class="px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500" placeholder="Ej. Alex, Usuario Maatly...">
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-semibold px-3 py-1 rounded-full bg-positivo-suave c-positivo border border-emerald-200 dark:border-emerald-800">
-                                    <svg class="w-3.5 h-3.5 align-middle mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5c0-1.66 4-3 9-3s9 1.34 9 3-4 3-9 3-9-1.34-9-3z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>Guardado en este dispositivo
+                                    <svg class="w-3.5 h-3.5 align-middle mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5c0-1.66 4-3 9-3s9 1.34 9 3-4 3-9 3-9-1.34-9-3z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg><span id="lblGuardadoDispositivo">Guardado en este dispositivo</span>
                                 </span>
                             </div>
                         </div>
                         </div>
+                    </div>
+                <!-- v0.50 «Tu perfil, v1»: idioma + tipo de perfil + estilo del consejo. Los textos de estos
+                     bloques se pintan desde PERFIL_I18N (perfilTextos, TODO por textContent) — el i18n de esta
+                     entrega cubre SOLO la sección Perfil; el resto de la app se traduce por áreas. -->
+                    <!-- v0.50: Idioma de la app — Español (Latino) / English. El select entra a la fachada K-SEL
+                         (sel-maatly + ddSembrar al boot) igual que los otros del hub de Ajustes. -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="min-w-0">
+                                <h4 id="lblIdiomaApp" class="font-bold text-slate-800 dark:text-white text-sm">Idioma de la app</h4>
+                                <p id="descIdiomaApp" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">El idioma con el que ves Maatly. Con el tiempo serán más.</p>
+                            </div>
+                            <select id="selIdiomaApp" class="sel-maatly cursor-pointer w-full sm:w-64 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 shadow-sm">
+                                <option value="es">Español (Latino)</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                        <p id="notaIdioma" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-[11px] text-slate-400 dark:text-slate-500">Por ahora el idioma pinta esta sección; el resto de la app sigue en español y se va traduciendo por entregas.</p>
+                    </div>
+                    <!-- v0.51 «País del perfil»: tarjeta entre Idioma y Tipo de perfil (el país es la raíz de
+                         idioma+moneda). Solo texto — sin banderas ni emojis (regla). El select entra a la fachada
+                         K-SEL (sel-maatly + ddSembrar al boot); las opciones se pintan desde PAIS_LISTA
+                         (paisOpcionesPintar). La regla base país→{idioma, moneda} vive en PAIS_REGLAS: se
+                         sugiere con modal honesto, nunca se impone. Dato listo para el alta futura de cuenta. -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="min-w-0">
+                                <h4 id="lblPaisApp" class="font-bold text-slate-800 dark:text-white text-sm">Tu país</h4>
+                                <p id="descPaisApp" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">De dónde eres. Maatly te lo usa para sugerir el idioma y la moneda con la que ver tus números.</p>
+                            </div>
+                            <select id="selPaisApp" class="sel-maatly cursor-pointer w-full sm:w-64 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 shadow-sm">
+                                <option value="">Elegir país…</option>
+                            </select>
+                        </div>
+                        <p id="notaPais" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-[11px] text-slate-400 dark:text-slate-500">Nota país.</p>
+                    </div>
+                    <!-- v0.50: Tipo de perfil — Básico/Premium/Admin. Admin lleva sello visual «exclusivo del creador»
+                         y todas las tarjetas son seleccionables (sin lógica de licencias hoy). Tarjetas creadas por
+                         JS con createElement/textContent — nada de innerHTML (regla de seguridad). -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <h4 id="lblTipoPerfil" class="font-bold text-slate-800 dark:text-white text-sm">Tipo de perfil</h4>
+                        <p id="descTipoPerfil" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Tu plan dentro de Maatly. Hoy la elección queda guardada en este dispositivo.</p>
+                        <div id="cardsPlanPerfil" class="grid sm:grid-cols-3 gap-3 mt-4"></div>
+                        <p id="notaPlan" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-[11px] text-slate-400 dark:text-slate-500">La activación real de Premium/Admin llegará con la app de licencias del creador. Mientras tanto, todos los perfiles funcionan igual.</p>
+                    </div>
+                    <!-- v0.50: Estilo del consejo — parámetro de tono de los avisos. Los consumidores reales
+                         (renovación, débito, sobregasto) conectan en v0.51 con plan propio. -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <h4 id="lblEstiloConsejo" class="font-bold text-slate-800 dark:text-white text-sm">Estilo del consejo</h4>
+                        <p id="descEstiloConsejo" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Cómo te quiere hablar la app: qué tan estricta o qué tan suave con los avisos.</p>
+                        <div id="cardsEstiloPerfil" class="grid sm:grid-cols-3 gap-3 mt-4"></div>
+                        <p id="notaEstilo" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-[11px] text-slate-400 dark:text-slate-500">Los avisos reales (renovación, débito, sobregasto) tomarán este estilo en la próxima entrega.</p>
                     </div>
                 </div>
 
@@ -1874,12 +1932,12 @@
                             </div>
                             <div class="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
                                 <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                                    <select id="selCadencia" class="w-36 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors">
+                                    <select id="selCadencia" class="sel-maatly cursor-pointer w-36 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors">
                                         <option value="mensual">Mensual</option>
                                         <option value="quincenal">Quincenal</option>
                                         <option value="semanal">Semanal</option>
                                     </select>
-                                    <select id="selRenovaModo" class="w-44 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors">
+                                    <select id="selRenovaModo" class="sel-maatly cursor-pointer w-44 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors">
                                         <option value="auto">Renovación auto</option>
                                         <option value="dia">Cobro día exacto</option>
                                     </select>
@@ -1901,7 +1959,7 @@
                             </div>
                             <div class="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
                                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                                    <select id="selMonedaApp" class="w-56 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"></select>
+                                    <select id="selMonedaApp" class="sel-maatly cursor-pointer w-56 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"></select>
                                     <button id="btnConvertirMoneda" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-colors flex-shrink-0">Cambiar moneda</button>   <!-- v0.40.4: «Tasa…» se jubila — la tasa de la moneda en curso se fija al volver a elegir la misma moneda aquí abajo -->
                                 </div>
                                 <p id="monedaPreview" class="text-xs font-semibold text-slate-500 dark:text-slate-400 sm:text-right"></p>
@@ -1918,7 +1976,7 @@
                             <div class="flex flex-col items-start sm:items-end gap-1.5">
                                 <div class="flex items-center gap-2">
                                     <!-- v0.40.3: la moneda LOCAL de la referencia es SELECCIONABLE (Bs. por defecto — no está soldada) -->
-                                    <select id="selLocalRef" class="w-36 px-2.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"></select>
+                                    <select id="selLocalRef" class="sel-maatly cursor-pointer w-36 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors"></select>
                                     <input type="number" id="inputTasaGlobalConfig" class="w-28 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors" placeholder="Ej. 43.0">
                                 </div>
                                 <!-- v0.40.2/.3: la tasa es SOLO referencia de moneda local — opt-in visual en la card «Te queda» de Inicio -->
@@ -2101,7 +2159,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.45';
+        const VER_APP = 'v0.51';
 
         let chartHistBar = null;
         let chartHistPie = null;
@@ -2119,7 +2177,7 @@
 
         // v0.9: CONFIGURACIÓN POR SECCIONES (hub + sub-vistas)
         const CFG_SECCIONES = {
-            perfil:     { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0"></path></svg> ', titulo: 'Tu perfil', sub: 'Tu nombre, guardado solo en este dispositivo.' },
+            perfil:     { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0"></path></svg> ', titulo: 'Tu perfil', sub: 'Tu nombre, tu país, tu idioma, tu tipo de perfil y tu estilo de consejo — guardado solo en este dispositivo.' },
             apariencia: { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 14h6M9 8h6M17 16h6"></path></svg> ', titulo: 'Apariencia', sub: 'Colores de la app y de las gráficas.' },
             finanzas:   { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h13M13 4l4 4-4 4M20 16H7M11 20l-4-4 4-4"></path></svg> ', titulo: 'Dinero y metas', sub: 'Tu ingreso, tu ahorro deseado y la tasa de cambio.' },
             agente:     { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> ', titulo: 'Asistente IA', sub: 'Clave y modelo del asistente, y bloqueo con PIN. El chat está en pausa por ahora.' },
@@ -3346,18 +3404,18 @@
 
         /* ---------- v0.25.38 «¿Qué veo?»: info breve de cada widget — los botones ⓘ abren #modalInfoWidget ---------- */
         const WIDGET_INFO = {
-            kDisp: { t: 'Te queda', d: 'Lo que te queda de TU TRAMO ACTUAL (v0.42): el tramo es el mes, la quincena o la semana según tu cadencia de cobro (la fijas en Ajustes → Dinero y metas). El tramo recibe una cuota de tu sueldo (completa, ½ fija o la parte proporcional a los días) a la que se suman los pagos reales que registraste en él y lo que arrastraste de los tramos previos; se le restan los gastos y apartados del tramo. La barra «Débito del tramo» muestra qué parte del tramo ya consumiste (v0.45: las píldoras de tramo y de renovación salieron de esta card; el aviso de renovación vive en 🔔 Notificaciones). El cierre del mes sigue siendo mensual: la cadencia es solo la lente para lo vivo. Ojo con los %: el débito del tramo, la píldora «Meta» (progreso hacia tu meta de ahorro deseada del mes) y el % del ingreso de la card verde de Tendencias son tres números diferentes — cada uno responde su pregunta.' },
-            kAhorro: { t: 'Ahorro de este mes', d: 'Todo lo que apartaste este mes: aportes a tus metas + el ahorro que fijaste en Ajustes.' },
-            kGasto: { t: 'Gastos del mes', d: 'Todo lo que gastaste este mes: movimientos que registraste + actividades con dinero.' },
-            wMovs: { t: 'Movimientos de este mes', d: 'Cada movimiento del mes con su fecha y monto. El check verde cuenta los de este mes.' },
-            wPlanes: { t: 'Metas de ahorro', d: 'Tus metas de ahorro, cuánto llevas en cada una y la fecha objetivo.' },
-            wActiv: { t: 'Actividades', d: 'Tus tareas y eventos del tablero, con su estado. La lupa sirve para ordenar y filtrar.' },
-            wNotas: { t: 'Notas', d: 'Notas libres, con archivos y emojis. Se guardan solas.' },
-            hGrafica: { t: 'Ingresos, ahorro y gastos', d: 'Tus ingresos, ahorro y gastos por mes, trimestre, semestre o año, según la vista que elijas. Verde: te sobró dinero. Rojo: te pasaste. La línea «Meta» es tu meta de ahorro. La card verde de abajo es el ahorro del último período; su % del ingreso dice cuánto de lo que entró ese período quedó ahorrado (el % sale de dividir el ahorro entre el ingreso del mismo período).' },
-            hCategorias: { t: '¿En qué gastas más?', d: 'En qué se fue tu dinero real del período que ves junto al título. El % sobre cada porción es su parte del total gastado del período (solo aparece en porciones de 3% o más para que la gráfica respire). El total del período va al centro de la dona. Toca una parte de la gráfica para ver el detalle por mes y por movimiento.' },
-            aCategorias: { t: 'Comparación por categoría', d: 'Tu gasto de este período por categoría, frente al promedio de la ventana que elijas arriba: 1 mes (el mes previo), 3 o 12 meses previos que tengan datos. El número junto a ▲▼ es esa desviación en %: ▲ 40% significa que gastaste 40% más que tu promedio; ▼ gastaste menos. «nuevo» aparece cuando la categoría no tiene promedio con el que compararse (sin gasto en la ventana). La barra de cada fila mide esa categoría frente a la más grande del período. Solo cuenta dinero real.' },
-            hAcumulado: { t: 'Tu ahorro acumulado', d: 'Tu ahorro guardado: lo que sobró en los cierres + lo que apartaste − lo que retiraste y lo que está en metas. Hazlo crecer con «Apartar dinero» o úsalo con «Usar ahorro».' },
-            cardAnaAhorro: { t: 'Ahorro del último período', d: 'El ahorro contable del último período con dos señales: el % del ingreso (cuánto de lo que entró quedó ahorrado) y tu racha (meses o períodos seguidos en verde; en rojo te avisa si se rompió). No es el mismo número que la card «Ahorro de este mes» del inicio: esa suma lo que apartaste en el mes; esta usa la contabilidad del cierre (metas + aportes nuevos − retiros). Se queda verde mientras te sobre dinero y se vuelve roja si te pasaste.' }
+            kDisp: { t: 'Te queda', d: 'Es el dinero vivo de tu tramo: el mes, la quincena o la semana según la cadencia de cobro que fijes en Ajustes → Dinero y metas.\n\nAl tramo entra una cuota de tu sueldo (completa, media fija o la parte proporcional a los días), se suman los pagos que ya registraste en él y lo que arrastraste de tramos previos, y se restan tus gastos y apartados del tramo.\n\nLa barra «Débito del tramo» muestra qué parte del tramo ya consumiste; el aviso de renovación te llega por 🔔 Notificaciones. El cierre del mes sigue siendo mensual: la cadencia es solo la lente para lo vivo.\n\nOjo con los %: el débito del tramo, la píldora «Meta» (tu meta de ahorro deseada del mes) y el % del ingreso de la card verde de Tendencias son tres números distintos — cada uno responde su pregunta.' },
+            kAhorro: { t: 'Ahorro de este mes', d: 'Todo lo que apartaste este mes.\n\nSuma tus aportes a las metas de ahorro y el ahorro que fijaste en Ajustes.' },
+            kGasto: { t: 'Gastos del mes', d: 'Todo lo que gastaste este mes.\n\nSuma los movimientos que registraste y las actividades con dinero.' },
+            wMovs: { t: 'Movimientos de este mes', d: 'Cada movimiento del mes, con su fecha y su monto.\n\nEl check verde indica que el movimiento cuenta para este mes.' },
+            wPlanes: { t: 'Metas de ahorro', d: 'Tus metas de ahorro.\n\nCuánto llevas en cada una y su fecha objetivo.' },
+            wActiv: { t: 'Actividades', d: 'Tus tareas y eventos del tablero, con su estado.\n\nLa lupa sirve para ordenar y filtrar.' },
+            wNotas: { t: 'Notas', d: 'Notas libres, con archivos y emojis.\n\nSe guardan solas.' },
+            hGrafica: { t: 'Ingresos, ahorro y gastos', d: 'Tus ingresos, ahorro y gastos por mes, trimestre, semestre o año, según la vista que elijas.\n\nVerde: te sobró dinero. Rojo: te pasaste. La línea «Meta» es tu meta de ahorro.\n\nLa card verde de abajo es el ahorro del último período: su % del ingreso dice cuánto de lo que entró quedó ahorrado (el ahorro dividido entre el ingreso del mismo período).' },
+            hCategorias: { t: '¿En qué gastas más?', d: 'En qué se fue tu dinero real del período que ves junto al título.\n\nEl % sobre cada porción es su parte del total gastado del período (solo aparece en porciones de 3% o más para que la gráfica respire). El total del período va al centro de la dona.\n\nToca una porción para ver el detalle por mes y por movimiento.' },
+            aCategorias: { t: 'Comparación por categoría', d: 'Tu gasto de este período por categoría, frente al promedio de la ventana que elijas arriba: 1 mes (el previo), 3 o 12 meses previos que tengan datos.\n\nEl número junto a ▲▼ es esa desviación en %: ▲ 40% significa que gastaste 40% más que tu promedio; ▼ gastaste menos. «nuevo» aparece cuando la categoría no tiene promedio con el que compararse (sin gasto en la ventana).\n\nLa barra de cada fila mide esa categoría frente a la más grande del período. Solo cuenta dinero real.' },
+            hAcumulado: { t: 'Tu ahorro acumulado', d: 'Tu ahorro guardado: lo que sobró en los cierres + lo que apartaste − lo que retiraste y lo que está en metas.\n\nHazlo crecer con «Apartar dinero» o úsalo con «Usar ahorro».' },
+            cardAnaAhorro: { t: 'Ahorro del último período', d: 'El ahorro contable del último período, con dos señales: el % del ingreso (cuánto de lo que entró quedó ahorrado) y tu racha (períodos seguidos en verde; en rojo te avisa si se rompió).\n\nNo es el mismo número que la card «Ahorro de este mes» del inicio: esa suma lo que apartaste en el mes; esta usa la contabilidad del cierre (metas + aportes nuevos − retiros).\n\nSe queda verde mientras te sobre dinero y se vuelve roja si te pasaste.' }
         };
         window.abrirInfoWidget = function(clave) {
             triggerHaptic();
@@ -3365,7 +3423,18 @@
             if (!w) return;
             const tEl = document.getElementById('iwTitulo'), dEl = document.getElementById('iwTexto');
             if (tEl) tEl.textContent = w.t;
-            if (dEl) dEl.textContent = w.d;
+            /* v0.47 «fichas en párrafos»: los textos van con \n\n como separador de párrafo — un <p> por
+               bloque, SIEMPRE con createElement + textContent (innerHTML prohibido: regla de seguridad). */
+            if (dEl) {
+                dEl.textContent = '';
+                String(w.d || '').split(/\n\n+/).forEach(function(bloque) {
+                    const txt = bloque.trim();
+                    if (!txt) return;
+                    const p = document.createElement('p');
+                    p.textContent = txt;
+                    dEl.appendChild(p);
+                });
+            }
             aaDlgAbrir('modalInfoWidget');
         };
 
@@ -3638,8 +3707,10 @@
         const gridHist = document.getElementById('gridHistorico');
         const btnEditGrid = document.getElementById('btnEditGrid');
         const txtEditGrid = document.getElementById('txtEditGrid');
+        const btnResetWidgets = document.getElementById('btnResetWidgets');
         const LAY_INICIO = 'maatlyLayoutInicio', LAY_HIST = 'maatlyLayoutHistorico';
         const GS_COL = 3, GS_CELL = 20, GS_GAP = 12; /* inset por lado en GridStack: separación visible = 2x12 = 24px (como gap-6) */
+        const GS_FIT_FLOOR = 9; /* v0.49: piso mínimo de carga (~150px) — un layout guardado corto no se re-estira al recargar (antes el piso lo daba el data-hmin de datos, 280-340px) */
         let isEditMode = false, gsInicio = null, gsHist = null;
         const mqGS1Col = window.matchMedia('(max-width: 767px)');
 
@@ -3736,7 +3807,12 @@
                 if (guardado) {
                     const it = guardado.find(function(x) { return x.id === (w.dataset.w || ""); });
                     if (it) {
-                        const ww = Math.max(sizes[0], Math.min(sizes[sizes.length - 1], it.w)), hh = Math.max(minH, Math.min(maxH || it.h, it.h));
+                        /* v0.49: el piso de carga es el estético (GS_FIT_FLOOR ~150px), NO el data-hmin —
+                           un layout guardado corto ya no se re-estira al recargar.
+                           GridStack omit w cuando w===minW y h cuando h===minH al salvar — el faltante
+                           se reconstruye con los pisos estáticos del widget (minW=sizes[0], minH=data-hmin). */
+                        const ww = it.w > 0 ? Math.max(sizes[0], Math.min(sizes[sizes.length - 1], it.w)) : sizes[0];
+                        const hh = it.h > 0 ? Math.max(GS_FIT_FLOOR, Math.min(maxH || it.h, it.h)) : minH;
                         w.setAttribute("gs-x", String(it.x)); w.setAttribute("gs-y", String(it.y)); w.setAttribute("gs-w", String(ww)); w.setAttribute("gs-h", String(hh));
                     }
                 }
@@ -3755,6 +3831,10 @@
                 staticGrid: !isEditMode
             }, g);
             g.dataset.gsListo = "1";
+            /* v0.49: lo guardado CORTO baja su propio piso (n.minH y gs-min-h) a su h actual, para que
+               ni un resize manual ni moveNode lo re-inflen al data-hmin (solo aplica cuando lo guardado
+               quedó entre GS_FIT_FLOOR y el data-hmin: GS_FIT_FLOOR nunca queda pisado). */
+            try { gs.engine.nodes.forEach(function(nmn) { if (!nmn || !nmn.el) return; const mi = nmn.el.getAttribute("gs-min-h"); const mh0 = mi ? parseInt(mi, 10) : 0; if (mh0 && nmn.h < mh0 && nmn.h >= GS_FIT_FLOOR) { nmn.minH = nmn.h; nmn.el.setAttribute("gs-min-h", String(nmn.h)); } }); } catch (e) { }
             gs.on("change", function(ev) { try { (ev || []).forEach(function(n) { if (n && n.el) n.el.dataset.span = String(n.w); }); } catch (e) { } });
             if (mqGS1Col.matches) { try { gs.engine.nodes.forEach(function(n) { if (n.el && n.w > 1) gs.update(n.el, { w: 1, x: 0 }); }); gs.compact(); } catch (e) { } }
             /* v0.25.15: secuencia de asentado — alturas al contenido en 2 pasadas (la 2ª tras asentar los
@@ -3816,6 +3896,7 @@
             btnEditGrid.addEventListener('click', () => {
                 triggerHaptic();
                 isEditMode = !isEditMode;
+                if (btnResetWidgets) btnResetWidgets.classList.toggle('hidden', !isEditMode); /* v0.48: «Predeterminado» solo vive en Personalizar */
                 [grid, gridHist].forEach(g => { if (g && g.classList.contains("grid-stack")) g.classList.toggle("edit-mode", isEditMode); });
                 if (isEditMode) {
                     txtEditGrid.textContent = "Guardar";
@@ -3834,6 +3915,25 @@
                 }
             });
         }
+        /* v0.48: «Predeterminado» — regresa al diseño de fábrica de AMBOS tableros: borra los layouts
+           guardados y recarga (arranque limpio = plantilla de fábrica fiel al 100%). Sin template
+           guardado no destruye nada: solo avisa. «Guardar» vuelve a crear tu template cuando quieras. */
+        if (btnResetWidgets) {
+            btnResetWidgets.addEventListener('click', function() {
+                try { triggerHaptic(); } catch (e) { }
+                let hayTemplate = false;
+                try { hayTemplate = !!(gsLayout(LAY_INICIO) || gsLayout(LAY_HIST)); } catch (e) { }
+                if (!hayTemplate) { try { mostrarToast('¡Ya estás viendo el diseño base del tablero!', 'info'); } catch (e) { } return; }
+                showModal('¿Volver al diseño base?',
+                    'Tu arreglo guardado (posiciones y tamaños de Inicio y Tendencias) se descarta y los widgets vuelven al diseño de fábrica. Si lo quieres de nuevo, arrástralo y pulsa «Guardar».',
+                    'Volver al diseño base', 'bg-indigo-600 hover:bg-indigo-700',
+                    function() {
+                        try { localStorage.removeItem(LAY_INICIO); } catch (e) { console.warn('[Panel] no se pudo borrar el layout de Inicio:', e); }
+                        try { localStorage.removeItem(LAY_HIST); } catch (e) { console.warn('[Panel] no se pudo borrar el layout de Tendencias:', e); }
+                        location.reload();
+                    });
+            });
+        }
 
         /* responsive: en movil 1 columna apilada; al volver a escritorio se restituye el diseno */
         mqGS1Col.addEventListener('change', function() {
@@ -3848,7 +3948,9 @@
                         gs.engine.nodes.forEach(function(n) {
                             if (!n || !n.el) return;
                             const dmin = n.el.dataset.hmin, dmax = n.el.dataset.hmax;
-                            if (dmin) { const mh = gsHCells(+dmin); n.minH = mh; n.el.setAttribute("gs-min-h", String(mh)); }
+                            /* v0.49: el piso restaurado se deja en min(data-hmin, h actual) — un layout guardado
+                               corto NO se re-estira al cruzar el breakpoint ida y vuelta. */
+                            if (dmin) { const mh = Math.min(gsHCells(+dmin), n.h || gsHCells(+dmin)); n.minH = mh; n.el.setAttribute("gs-min-h", String(mh)); }
                             if (dmax) { const xh = Math.floor((+dmax + 2 * GS_GAP) / GS_CELL); n.maxH = xh; n.el.setAttribute("gs-max-h", String(xh)); }
                         });
                     }
@@ -3865,6 +3967,72 @@
             });
         });
 
+        /* ===== v0.50 «Tu perfil, v1» — storage del perfil (ANTES de su primer uso) =====
+           UNA clave (maatlyPerfil) guarda { v, nombre, idioma, plan, estilo } con accesores read-modify-write
+           (patrón finanzasCfg). El nombre se ESPEJEA en «nombreUsuario» porque hay lectores vivos que la leen
+           directo (saludo, calendario, agente) — coherencia sin tocarlos. El i18n de esta entrega traduce
+           SOLO el bloque Perfil (t() + PERFIL_I18N, siempre via textContent); el resto de la app se
+           traduce por áreas en entregas futuras. v0.51: país del perfil (PAIS_LISTA + PAIS_REGLAS) —
+           el país sugiere idioma + moneda con confirmación honesta; la moneda usa el MISMO esqueleto de
+           escritura de «Cambiar moneda» (v0.40.1) y jamás inventa tasas. */
+        const K_PERFIL = 'maatlyPerfil';
+        const PERFIL_IDIOMAS = ['es', 'en'];
+        const PERFIL_PLANES = ['basico', 'premium', 'admin'];
+        const PERFIL_ESTILOS = ['suave', 'equilibrado', 'estricto'];
+        const PERFIL_DEF = { v: 1, nombre: '', idioma: 'es', plan: 'basico', estilo: 'equilibrado', pais: '' };
+        /* v0.51: catálogo de países del perfil — [code, nombre ES, nombre EN]. Solo texto (sin banderas ni emojis).
+           Son los 20 países que hoy mapean limpio a las monedas del catálogo MONEDAS; la lista crece por entrega. */
+        const PAIS_LISTA = [
+            ['ar', 'Argentina', 'Argentina'], ['bo', 'Bolivia', 'Bolivia'], ['cl', 'Chile', 'Chile'],
+            ['co', 'Colombia', 'Colombia'], ['cr', 'Costa Rica', 'Costa Rica'], ['ec', 'Ecuador', 'Ecuador'],
+            ['sv', 'El Salvador', 'El Salvador'], ['es', 'España', 'Spain'], ['us', 'Estados Unidos', 'United States'],
+            ['gt', 'Guatemala', 'Guatemala'], ['hn', 'Honduras', 'Honduras'], ['mx', 'México', 'Mexico'],
+            ['ni', 'Nicaragua', 'Nicaragua'], ['pa', 'Panamá', 'Panama'], ['py', 'Paraguay', 'Paraguay'],
+            ['pe', 'Perú', 'Peru'], ['pr', 'Puerto Rico', 'Puerto Rico'], ['do', 'República Dominicana', 'Dominican Republic'],
+            ['uy', 'Uruguay', 'Uruguay'], ['ve', 'Venezuela', 'Venezuela']
+        ];
+        /* v0.51: regla base país → { idioma, moneda }. La moneda SIEMPRE se valida contra el catálogo
+           MONEDAS en ejecución (vive más abajo en el archivo); nada de tasas inventadas en la regla. */
+        const PAIS_REGLAS = {
+            ve: { idioma: 'es', moneda: 'VES' }, mx: { idioma: 'es', moneda: 'MXN' }, co: { idioma: 'es', moneda: 'COP' },
+            pe: { idioma: 'es', moneda: 'PEN' }, cl: { idioma: 'es', moneda: 'CLP' }, ar: { idioma: 'es', moneda: 'ARS' },
+            uy: { idioma: 'es', moneda: 'UYU' }, py: { idioma: 'es', moneda: 'PYG' }, bo: { idioma: 'es', moneda: 'BOB' },
+            ec: { idioma: 'es', moneda: 'USD' }, sv: { idioma: 'es', moneda: 'USD' }, pa: { idioma: 'es', moneda: 'USD' },
+            pr: { idioma: 'es', moneda: 'USD' }, es: { idioma: 'es', moneda: 'EUR' }, us: { idioma: 'en', moneda: 'USD' },
+            gt: { idioma: 'es', moneda: 'GTQ' }, hn: { idioma: 'es', moneda: 'HNL' }, ni: { idioma: 'es', moneda: 'NIO' },
+            cr: { idioma: 'es', moneda: 'CRC' }, do: { idioma: 'es', moneda: 'DOP' }
+        };
+        const PERFIL_IDIOMA_NOMBRE = { es: 'Español (Latino)', en: 'English' };   /* nombre mostrable de cada idioma (modal del país) */
+
+        function perfilGet() {
+            let d = null;
+            try { d = JSON.parse(localStorage.getItem(K_PERFIL) || 'null'); } catch (e) { console.warn('[Perfil] maatlyPerfil ilegible:', e && e.message); d = null; }
+            const p = Object.assign({}, PERFIL_DEF, (d && typeof d === 'object') ? d : {});
+            if (PERFIL_IDIOMAS.indexOf(p.idioma) < 0) p.idioma = 'es';
+            if (PERFIL_PLANES.indexOf(p.plan) < 0) p.plan = 'basico';
+            if (PERFIL_ESTILOS.indexOf(p.estilo) < 0) p.estilo = 'equilibrado';
+            if (typeof p.nombre !== 'string') p.nombre = '';
+            if (typeof p.pais !== 'string') p.pais = '';
+            if (p.pais && !PAIS_LISTA.some(function(f) { return f[0] === p.pais; })) p.pais = '';   /* v0.51: país fuera del catálogo = sin país (descorruptora) */
+            if (!p.nombre) { try { p.nombre = (localStorage.getItem('nombreUsuario') || '').trim(); } catch (e) { p.nombre = ''; } }   /* v0.50: nadie pierde su nombre al migrar de clave */
+            return p;
+        }
+        function perfilSet(patch) {
+            const cambios = {};
+            ['nombre', 'idioma', 'plan', 'estilo', 'pais'].forEach(function(k) { if (patch && patch[k] !== undefined) cambios[k] = patch[k]; });
+            const nuevo = Object.assign(perfilGet(), cambios);
+            nuevo.v = 1;
+            try { localStorage.setItem(K_PERFIL, JSON.stringify(nuevo)); } catch (e) {
+                console.error('[Perfil] maatlyPerfil no se pudo guardar:', e);
+                try { mostrarToast('El perfil no se pudo guardar — revisa la consola (F12)', 'error'); } catch (e2) { }
+            }
+            try {   /* v0.50: espejo de compatibilidad para los lectores del nombre viejo */
+                const espejo = (localStorage.getItem('nombreUsuario') || '').trim();
+                if (nuevo.nombre && nuevo.nombre !== espejo) localStorage.setItem('nombreUsuario', nuevo.nombre);
+            } catch (e) { console.warn('[Perfil] espejo del nombre falló:', e && e.message); }
+            return nuevo;
+        }
+
         /* primer levantamiento: Mes Actual al cargar; Historico en lazy cuando se abra su sub-pestaña */
         asegurarGridInicio();
         const inputTasaConfig = document.getElementById('inputTasaGlobalConfig');
@@ -3872,13 +4040,345 @@
         const inputNombreUsuario = document.getElementById('inputNombreUsuario');
         
         if(inputNombreUsuario) {
-            inputNombreUsuario.value = localStorage.getItem('nombreUsuario') || 'Alex';
+            inputNombreUsuario.value = perfilGet().nombre || localStorage.getItem('nombreUsuario') || 'Alex';   /* v0.50: el nombre vive en el perfil y cae a la clave vieja */
             inputNombreUsuario.addEventListener('change', (e) => {
                 localStorage.setItem('nombreUsuario', e.target.value.trim());
+                perfilSet({ nombre: e.target.value.trim() });   /* v0.50: espejo del nombre en el perfil */
                 if (window.calTituloRefrescar) { try { window.calTituloRefrescar(); } catch (e2) {} }   /* v0.25.26: re-pinta «Calendario de …» */
                 mostrarToast("Nombre de usuario guardado", "success");
             });
         }
+
+        /* v0.50: diccionario del bloque Perfil — ES es el canónico; EN traduce esta sección. */
+        const PERFIL_I18N = {
+            es: {
+                nombreLbl: 'Tu nombre',
+                nombrePh: 'Ej. Alex, Usuario Maatly...',
+                guardadoDisp: 'Guardado en este dispositivo',
+                idiomaLbl: 'Idioma de la app',
+                idiomaDesc: 'El idioma con el que ves Maatly. Con el tiempo serán más.',
+                idiomaNota: 'Por ahora el idioma pinta esta sección; el resto de la app sigue en español y se va traduciendo por entregas.',
+                planLbl: 'Tipo de perfil',
+                planDesc: 'Tu plan dentro de Maatly. Hoy la elección queda guardada en este dispositivo.',
+                planBasico: 'Básico',
+                planBasicoDesc: 'Lo esencial: todo Maatly en su base.',
+                planPremium: 'Premium',
+                planPremiumDesc: 'Extras avanzados del creador, cuando existan.',
+                planAdmin: 'Admin',
+                planAdminDesc: 'Tu propia cuenta: control completo.',
+                planSello: 'Exclusivo del creador',
+                planNota: 'La activación real de Premium/Admin llegará con la app de licencias del creador. Mientras tanto, todos los perfiles funcionan igual.',
+                estiloLbl: 'Estilo del consejo',
+                estiloDesc: 'Cómo te quiere hablar la app: qué tan estricta o qué tan suave con los avisos.',
+                estiloSuave: 'Suave',
+                estiloSuaveDesc: 'Sugerencias amables; aviso solo cuando de verdad importa.',
+                estiloEquilibrado: 'Equilibrada',
+                estiloEquilibradoDesc: 'Guía clara y oportuna: ni silenciosa ni insistente.',
+                estiloEstricto: 'Estricta',
+                estiloEstrictoDesc: 'Recordatorios firmes y seguimiento de cerca.',
+                estiloNota: 'Los avisos reales (renovación, débito, sobregasto) tomarán este estilo en la próxima entrega.',
+                paisLbl: 'Tu país',
+                paisDesc: 'De dónde eres. Maatly te lo usa para sugerir el idioma y la moneda con la que ver tus números.',
+                paisElegir: 'Elegir país…',
+                paisNota: 'Tu país queda guardado en tu perfil, listo para cuando abras tu cuenta. Elegirlo trae una sugerencia de idioma y moneda: nada se aplica sin tu confirmación, y la moneda solo cambia cómo se VEN tus montos.',
+                paisSinDefinir: 'Sin país todavía — elige el tuyo: te puedo sugerir idioma y moneda.',
+                paisYaCoincide: 'Todo ya coincide: tu idioma y tu moneda ya son los que tu país sugiere.',
+                paisApTitulo: 'Sugerencia de tu país',
+                paisApMsg: 'Desde {pais} te sugiero ver Maatly en {idioma} y con la moneda {moneda}. El idioma se aplica al instante; la moneda solo cambia cómo se VEN tus montos — tus datos siguen guardados en su base ({base}) y no se toca nada. ¿Aplico los valores sugeridos?',
+                paisApMsgMoneda: 'Tu país es {pais} y tu moneda sugerida es {moneda}. Solo cambia cómo se VEN tus montos — tus datos siguen guardados en su base ({base}) y no se toca nada. ¿Aplico la moneda sugerida?',
+                paisAplicar: 'Aplicar sugerencia',
+                paisAplicado: 'Perfil ajustado a tu país: {idioma} y {moneda}.',
+                paisIdiomaListo: 'Perfil ajustado a tu país — idioma: {idioma}.',
+                paisSinTasa: 'La moneda queda sin tasa por ahora: los montos se ven tal cual su base hasta que fijes la tasa en «Dinero y metas».',
+                paisMonedaFalta: 'La moneda {moneda} de tu país no está en el catálogo de monedas de la app — no pude sugerir ese cambio.'
+            },
+            en: {
+                nombreLbl: 'Your name',
+                nombrePh: 'E.g. Alex, Maatly user...',
+                guardadoDisp: 'Saved on this device',
+                idiomaLbl: 'App language',
+                idiomaDesc: 'The language you see Maatly in. More will come with time.',
+                idiomaNota: 'For now the language paints this section; the rest of the app stays in Spanish until its turn comes.',
+                planLbl: 'Profile type',
+                planDesc: 'Your plan within Maatly. Today the choice is saved on this device.',
+                planBasico: 'Basic',
+                planBasicoDesc: 'The essentials: all of Maatly at its base.',
+                planPremium: 'Premium',
+                planPremiumDesc: 'Advanced extras from the creator, once they exist.',
+                planAdmin: 'Admin',
+                planAdminDesc: 'Your own account: full control.',
+                planSello: 'Creator exclusive',
+                planNota: 'Real activation of Premium/Admin will arrive with the license app from the creator. Until then, every profile works the same.',
+                estiloLbl: 'Advice style',
+                estiloDesc: 'How the app should talk to you: how strict or how soft it is with the alerts.',
+                estiloSuave: 'Gentle',
+                estiloSuaveDesc: 'Friendly nudges; alerts only when it truly matters.',
+                estiloEquilibrado: 'Balanced',
+                estiloEquilibradoDesc: 'Clear, timely guidance: neither silent nor pushy.',
+                estiloEstricto: 'Strict',
+                estiloEstrictoDesc: 'Firm reminders, followed closely.',
+                estiloNota: 'Real alerts (renewal, debit, overspending) will adopt this style in the next release.',
+                paisLbl: 'Your country',
+                paisDesc: 'Where you are from. Maatly uses it to suggest the language and currency to view your numbers in.',
+                paisElegir: 'Choose country…',
+                paisNota: 'Your country is saved in your profile, ready for when you create your account. Choosing it brings a language and currency suggestion: nothing applies without your confirmation, and the currency only changes how your amounts LOOK.',
+                paisSinDefinir: 'No country yet — pick yours: I can suggest a language and currency.',
+                paisYaCoincide: 'Everything already matches: your language and currency already are the ones your country suggests.',
+                paisApTitulo: 'Suggestion for your country',
+                paisApMsg: 'From {pais} I suggest viewing Maatly in {idioma} with the {moneda} currency. The language applies instantly; the currency only changes how your amounts LOOK — your data stays saved in its base ({base}) and nothing is touched. Apply the suggested values?',
+                paisApMsgMoneda: 'Your country is {pais} and your suggested currency is {moneda}. It only changes how your amounts LOOK — your data stays saved in its base ({base}) and nothing is touched. Apply the suggested currency?',
+                paisAplicar: 'Apply suggestion',
+                paisAplicado: 'Profile adjusted to your country: {idioma} and {moneda}.',
+                paisIdiomaListo: 'Profile adjusted to your country — language: {idioma}.',
+                paisSinTasa: 'The currency has no rate yet: amounts show as their base until you set the rate in "Money and goals".',
+                paisMonedaFalta: 'The currency {moneda} of your country is not in the app catalog — I could not suggest that change.'
+            }
+        };
+        function t(clave) {
+            const dic = PERFIL_I18N[perfilGet().idioma] || PERFIL_I18N.es;
+            if (typeof dic[clave] === 'string') return dic[clave];
+            if (typeof PERFIL_I18N.es[clave] === 'string') return PERFIL_I18N.es[clave];
+            return clave;
+        }
+
+        const PERFIL_PLANES_TXT = { basico: ['planBasico', 'planBasicoDesc'], premium: ['planPremium', 'planPremiumDesc'], admin: ['planAdmin', 'planAdminDesc'] };
+        const PERFIL_ESTILOS_TXT = { suave: ['estiloSuave', 'estiloSuaveDesc'], equilibrado: ['estiloEquilibrado', 'estiloEquilibradoDesc'], estricto: ['estiloEstricto', 'estiloEstrictoDesc'] };
+        const PERFIL_CARD_REFS = { plan: {}, estilo: {} };
+        const PERFIL_CARD_ACT = ['border-indigo-500', 'dark:border-indigo-400', 'bg-indigo-50', 'dark:bg-indigo-900/30'];
+        const PERFIL_CARD_INACT = ['border-slate-200', 'dark:border-slate-700', 'bg-slate-50', 'dark:bg-slate-900', 'hover:border-slate-300'];
+        function perfilCardEstado(btn, activo) {
+            if (!btn) return;
+            PERFIL_CARD_ACT.forEach(function(c) { btn.classList.toggle(c, activo); });
+            PERFIL_CARD_INACT.forEach(function(c) { btn.classList.toggle(c, !activo); });
+            btn.setAttribute('aria-pressed', activo ? 'true' : 'false');
+        }
+        /* v0.50: tarjetas reales <button> creadas por JS — createElement/textContent únicamente (sin innerHTML). */
+        function perfilCardFabricar(contenedor, clave, attr, esAdmin) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.setAttribute(attr, clave);
+            ['text-left', 'px-4', 'py-3', 'rounded-xl', 'border', 'transition-colors', 'cursor-pointer', 'focus:outline-none'].forEach(function(c) { btn.classList.add(c); });
+            btn.setAttribute('aria-pressed', 'false');
+            const fila = document.createElement('div');
+            fila.className = 'flex items-center gap-2 flex-wrap';
+            const nom = document.createElement('div');
+            nom.className = 'text-sm font-bold text-slate-800 dark:text-white';
+            fila.appendChild(nom);
+            let selloTxt = null;
+            if (esAdmin) {   /* v0.50: sello visual «exclusivo del creador» en Admin (icono candado SVG) */
+                const sello = document.createElement('span');
+                sello.className = 'inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+                const candado = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                candado.setAttribute('class', 'w-3 h-3 flex-shrink-0');
+                candado.setAttribute('fill', 'none');
+                candado.setAttribute('stroke', 'currentColor');
+                candado.setAttribute('viewBox', '0 0 24 24');
+                const pa = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                pa.setAttribute('stroke-linecap', 'round');
+                pa.setAttribute('stroke-linejoin', 'round');
+                pa.setAttribute('stroke-width', '2');
+                pa.setAttribute('d', 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z');
+                candado.appendChild(pa);
+                selloTxt = document.createElement('span');
+                sello.appendChild(candado);
+                sello.appendChild(selloTxt);
+                fila.appendChild(sello);
+            }
+            const desc = document.createElement('p');
+            desc.className = 'text-xs text-slate-500 dark:text-slate-400 mt-1';
+            btn.appendChild(fila);
+            btn.appendChild(desc);
+            btn.addEventListener('click', function() {
+                triggerHaptic();
+                if (attr === 'data-perfilPlan') perfilSet({ plan: clave });
+                else perfilSet({ estilo: clave });
+                perfilTextos();
+            });
+            contenedor.appendChild(btn);
+            return { titulo: nom, desc: desc, sello: selloTxt, btn: btn };
+        }
+        function perfilCardsConstruir() {
+            const contPlan = document.getElementById('cardsPlanPerfil');
+            if (contPlan && !contPlan.dataset.armado) {
+                contPlan.dataset.armado = '1';
+                PERFIL_PLANES.forEach(function(clave) {
+                    PERFIL_CARD_REFS.plan[clave] = perfilCardFabricar(contPlan, clave, 'data-perfilPlan', clave === 'admin');
+                });
+            }
+            const contEstilo = document.getElementById('cardsEstiloPerfil');
+            if (contEstilo && !contEstilo.dataset.armado) {
+                contEstilo.dataset.armado = '1';
+                PERFIL_ESTILOS.forEach(function(clave) {
+                    PERFIL_CARD_REFS.estilo[clave] = perfilCardFabricar(contEstilo, clave, 'data-perfilEstilo', false);
+                });
+            }
+        }
+        /* v0.50: pintor del bloque Perfil — textos + estados aria-pressed; corre al boot, al cambiar idioma y al elegir plan/estilo. */
+        function perfilTextos() {
+            const p = perfilGet();
+            paisOpcionesPintar();   /* v0.51: opciones del país en el idioma vivo + valor guardado */
+            const selT = document.getElementById('selIdiomaApp');
+            if (selT) {
+                selT.value = (PERFIL_IDIOMAS.indexOf(p.idioma) >= 0) ? p.idioma : 'es';
+                if (typeof window.ddPintar === 'function') { try { window.ddPintar(selT); } catch (e) { } }   /* trigger al día tras el set programático */
+            }
+            const poner = function(id, clave) { const el = document.getElementById(id); if (el) el.textContent = t(clave); };
+            poner('lblTuNombre', 'nombreLbl');
+            poner('lblGuardadoDispositivo', 'guardadoDisp');
+            poner('lblIdiomaApp', 'idiomaLbl');
+            poner('descIdiomaApp', 'idiomaDesc');
+            poner('notaIdioma', 'idiomaNota');
+            poner('lblPaisApp', 'paisLbl');
+            poner('descPaisApp', 'paisDesc');
+            const notaPaisEl = document.getElementById('notaPais');   /* v0.51: la nota cambia si el país está vacío */
+            if (notaPaisEl) notaPaisEl.textContent = p.pais ? t('paisNota') : t('paisSinDefinir');
+            poner('lblTipoPerfil', 'planLbl');
+            poner('descTipoPerfil', 'planDesc');
+            poner('notaPlan', 'planNota');
+            poner('lblEstiloConsejo', 'estiloLbl');
+            poner('descEstiloConsejo', 'estiloDesc');
+            poner('notaEstilo', 'estiloNota');
+            if (inputNombreUsuario) inputNombreUsuario.placeholder = t('nombrePh');
+            Object.keys(PERFIL_PLANES_TXT).forEach(function(clave) {
+                const r = PERFIL_CARD_REFS.plan[clave];
+                if (!r) return;
+                r.titulo.textContent = t(PERFIL_PLANES_TXT[clave][0]);
+                r.desc.textContent = t(PERFIL_PLANES_TXT[clave][1]);
+                if (r.sello) r.sello.textContent = t('planSello');
+                perfilCardEstado(r.btn, p.plan === clave);
+            });
+            Object.keys(PERFIL_ESTILOS_TXT).forEach(function(clave) {
+                const r = PERFIL_CARD_REFS.estilo[clave];
+                if (!r) return;
+                r.titulo.textContent = t(PERFIL_ESTILOS_TXT[clave][0]);
+                r.desc.textContent = t(PERFIL_ESTILOS_TXT[clave][1]);
+                perfilCardEstado(r.btn, p.estilo === clave);
+            });
+        }
+        const selIdiomaApp = document.getElementById('selIdiomaApp');
+        if (selIdiomaApp) {
+            selIdiomaApp.addEventListener('change', function() {
+                triggerHaptic();
+                perfilSet({ idioma: selIdiomaApp.value === 'en' ? 'en' : 'es' });   /* guardo el idioma del perfil */
+                perfilTextos();   /* re-render del bloque en el idioma elegido */
+            });
+        }
+        /* v0.51: país del perfil — el cambio SIEMPRE guarda el país (Cancelar del modal no lo revierte);
+           la sugerencia de idioma+moneda se pide aparte con modal honesto (Aplicar/Cancelar). */
+        const selPaisApp = document.getElementById('selPaisApp');
+        if (selPaisApp) {
+            selPaisApp.addEventListener('change', function() {
+                triggerHaptic();
+                perfilSet({ pais: selPaisApp.value });
+                perfilTextos();
+                perfilPaisReaccionar(selPaisApp.value);
+            });
+        }
+        /* ===== v0.51: helpers del país → regla base {idioma, moneda} =====
+           CUIDADO: la maquinaria de moneda (MONEDAS, monedaCfgGet, monedaRepintar) vive MÁS ABAJO en
+           este bloque de script; solo se toca desde eventos de usuario (al boot ya está todo asignado).
+           Los pintores usan SOLO PAIS_LISTA + t() — cero dependencias del sistema de moneda. */
+        function paisEntrada(codigo, idioma) {
+            const fila = PAIS_LISTA.find(function(e) { return e[0] === codigo; });
+            if (!fila) return '';
+            return idioma === 'en' ? fila[2] : fila[1];
+        }
+        function paisPlantilla(plantilla, valores) {   /* {clave} → valor, sin regex (split/join) */
+            try {
+                return Object.keys(valores || {}).reduce(function(acc, k) { return acc.split('{' + k + '}').join(String(valores[k])); }, String(plantilla));
+            } catch (e) { console.warn('[País] plantilla falló:', e && e.message); return String(plantilla); }
+        }
+        function paisMonedaCatalogo(code) {   /* el catálogo se lee en EJECUCIÓN (MONEDAS se asigna después de este bloque) */
+            if (typeof MONEDAS === 'undefined' || !Array.isArray(MONEDAS)) return null;
+            return MONEDAS.find(function(m) { return m && m.code === code; }) || null;
+        }
+        /* v0.51: pinta las opciones de #selPaisApp en el idioma vivo + valor del perfil (creat textContent). */
+        function paisOpcionesPintar() {
+            const sel = document.getElementById('selPaisApp');
+            if (!sel) return;
+            sel.textContent = '';
+            const vacia = document.createElement('option');
+            vacia.value = '';
+            vacia.textContent = t('paisElegir');
+            sel.appendChild(vacia);
+            const idioma = perfilGet().idioma;
+            PAIS_LISTA.forEach(function(fila) {
+                const op = document.createElement('option');
+                op.value = fila[0];
+                op.textContent = idioma === 'en' ? fila[2] : fila[1];
+                sel.appendChild(op);
+            });
+            sel.value = perfilGet().pais || '';
+            if (typeof window.ddPintar === 'function') { try { window.ddPintar(sel); } catch (e) { console.warn('[País] ddPintar falló:', e && e.message); } }
+        }
+        /* v0.51: aplica la moneda sugerida — MISMO esqueleto de escritura del «Cambiar moneda» (v0.40.1):
+           preserva ingreso/ahorroObj/base/tasas, símbolo/decimales salen del catálogo, JAMÁS inventa tasas
+           y purga conv. Devuelve { ok, sinTasa } para un aviso honesto. Cero datos convertidos: solo se
+           cambia cómo se VEN. */
+        function paisRealizarMoneda(code, cat) {
+            if (!cat) return { ok: false, sinTasa: false };
+            let prev = {};
+            try { prev = JSON.parse(localStorage.getItem('maatlyFinanzasCfg') || 'null') || {}; } catch (errPC) { console.warn('[País] maatlyFinanzasCfg ilegible:', errPC && errPC.message); prev = {}; }
+            if (!prev || typeof prev !== 'object') prev = {};
+            const cfgOut = {
+                ingreso: Math.max(0, Number(prev.ingreso) || 0),
+                ahorroObj: Math.max(0, Number(prev.ahorroObj) || 0),
+                base: (typeof prev.base === 'string' && prev.base) ? prev.base : 'USD',
+                moneda: code,
+                simbolo: cat.simbolo,
+                decimales: cat.decimales,
+                tasas: (prev.tasas && typeof prev.tasas === 'object') ? prev.tasas : {}   /* la tasa es OPCIONAL — nunca se inventa (regla v0.40.1) */
+            };
+            delete cfgOut.conv;   /* v0.40.1: purga del campo del modelo destructivo v0.40 */
+            try { localStorage.setItem('maatlyFinanzasCfg', JSON.stringify(cfgOut)); }
+            catch (errWrite) {
+                console.error('[País] maatlyFinanzasCfg no se pudo guardar:', errWrite);
+                mostrarToast('No pude guardar la moneda: ' + errWrite.message, 'error');
+                return { ok: false, sinTasa: false };
+            }
+            const sinTasa = (code !== cfgOut.base && !(cfgOut.tasas[code] && Number(cfgOut.tasas[code].t) > 0));
+            try { if (typeof window.monedaRepintar === 'function') window.monedaRepintar(); } catch (e) { console.warn('[País] repintado de moneda falló:', e && e.message); }
+            return { ok: true, sinTasa: sinTasa };
+        }
+        /* v0.51: reacción al país elegido. Todo coincide → toast. Solo difiere el idioma → se aplica
+           directo (sin modal repetitivo). Difiere la moneda → modal de confirmación Aplicar/Cancelar. */
+        function perfilPaisReaccionar(codigo) {
+            if (!codigo) return;
+            const regla = PAIS_REGLAS[codigo];
+            if (!regla) return;
+            const p = perfilGet();
+            const paisNombre = paisEntrada(codigo, p.idioma) || codigo.toUpperCase();
+            const idiomaNombre = PERFIL_IDIOMA_NOMBRE[regla.idioma] || regla.idioma;
+            const cat = paisMonedaCatalogo(regla.moneda);
+            if (!cat) { mostrarToast(paisPlantilla(t('paisMonedaFalta'), { moneda: regla.moneda }), 'error'); return; }
+            const cfgM = monedaCfgGet();
+            const mismoIdioma = p.idioma === regla.idioma;
+            const mismaMoneda = !!cfgM && cfgM.code === regla.moneda;
+            if (mismoIdioma && mismaMoneda) { mostrarToast(t('paisYaCoincide'), 'info'); return; }
+            if (!mismoIdioma && mismaMoneda) {   /* solo el idioma difiere: sin modal, directo */
+                perfilSet({ idioma: regla.idioma });
+                perfilTextos();
+                mostrarToast(paisPlantilla(t('paisIdiomaListo'), { idioma: idiomaNombre }), 'success');
+                return;
+            }
+            const msg = paisPlantilla(t(mismoIdioma ? 'paisApMsgMoneda' : 'paisApMsg'), {
+                pais: paisNombre,
+                idioma: idiomaNombre,
+                moneda: cat.nombre + ' (' + regla.moneda + ')',
+                base: cfgM ? cfgM.base : 'USD'
+            });
+            showModal(t('paisApTitulo'), msg, t('paisAplicar'), 'bg-indigo-600 hover:bg-indigo-700', function() {
+                if (!mismoIdioma) perfilSet({ idioma: regla.idioma });
+                const res = paisRealizarMoneda(regla.moneda, cat);
+                if (!res.ok) { perfilTextos(); return; }
+                perfilTextos();   /* re-pinta el bloque — y las opciones del país en el idioma nuevo */
+                let msgOk = paisPlantilla(t('paisAplicado'), { idioma: idiomaNombre, moneda: cat.nombre + ' (' + regla.moneda + ')' });
+                if (res.sinTasa) msgOk += ' ' + t('paisSinTasa');
+                mostrarToast(msgOk, 'success');
+            });
+        }
+        perfilCardsConstruir();
+        perfilTextos();
 
         
         if(localStorage.getItem('tasaCambio') && inputTasaConfig) {
@@ -3954,6 +4454,14 @@
             { code: 'PEN', nombre: 'Sol peruano',        simbolo: 'S/',  decimales: 2 },
             { code: 'CLP', nombre: 'Peso chileno',       simbolo: '$',   decimales: 0 },
             { code: 'ARS', nombre: 'Peso argentino',     simbolo: '$',   decimales: 2 },
+            { code: 'BOB', nombre: 'Boliviano (Bolivia)',  simbolo: 'Bs',  decimales: 2 },   /* v0.51: monedas país-perfil */
+            { code: 'UYU', nombre: 'Peso uruguayo',      simbolo: '$U',  decimales: 2 },
+            { code: 'PYG', nombre: 'Guaraní (Paraguay)', simbolo: '₲',   decimales: 0 },
+            { code: 'GTQ', nombre: 'Quetzal (Guatemala)', simbolo: 'Q',   decimales: 2 },
+            { code: 'HNL', nombre: 'Lempira (Honduras)',  simbolo: 'L',   decimales: 2 },
+            { code: 'CRC', nombre: 'Colón (Costa Rica)',  simbolo: '₡',   decimales: 2 },
+            { code: 'NIO', nombre: 'Córdoba (Nicaragua)', simbolo: 'C$',  decimales: 2 },
+            { code: 'DOP', nombre: 'Peso dominicano',     simbolo: 'RD$', decimales: 2 },
             { code: 'BRL', nombre: 'Real brasileño',     simbolo: 'R$',  decimales: 2 },
             { code: 'GBP', nombre: 'Libra esterlina',    simbolo: '£',   decimales: 2 }
         ];
@@ -4089,6 +4597,8 @@
                 if (selRenovaModoEl.value !== v.modo) selRenovaModoEl.value = 'auto';
                 inputRenovaDiaEl.value = v.dia;
                 inputRenovaDiaEl.classList.toggle('hidden', v.modo !== 'dia');
+                /* v0.47: K-SEL trigger en sync tras el .value programático (los cambios sin evento 'change' no repintan) */
+                if (window.ddPintar) { window.ddPintar(selCadenciaEl); window.ddPintar(selRenovaModoEl); }
                 const descEl = document.getElementById('cadDescTxt');
                 if (descEl) descEl.textContent = v.tipo === 'mensual' ? 'Tu sueldo entra 1 vez al mes: «Te queda» mira el mes completo.'
                     : v.tipo === 'semanal' ? 'Tu sueldo entra por semanas desde el día 1 (cada 7 días; la última puede quedar más corta).'
@@ -4157,6 +4667,7 @@
                 sel.innerHTML = opts;
                 sel.value = c.code;
                 if (sel.value !== c.code) sel.value = 'USD';   /* code desconocido → el catálogo manda */
+                if (window.ddPintar) window.ddPintar(sel);   /* v0.47: K-SEL trigger en sync tras innerHTML + .value programático (sin change) */
             }
             const pv = document.getElementById('monedaPreview');
             if (pv) pv.textContent = 'Así se verá: ' + mFmt(1234.56) + ' · con saldo negativo: ' + fmtDinero(-98.75);
@@ -4340,6 +4851,7 @@
                 opts += '<option value="OTRA">Otra (símbolo propio)</option>';
                 sel.innerHTML = opts;
                 sel.value = sel.querySelector('option[value="' + target + '"]') ? target : 'VES';
+                if (window.ddPintar) window.ddPintar(sel);   /* v0.47: K-SEL trigger en sync tras innerHTML + .value programático */
             }
             const d = document.getElementById('tasaLocalRefDesc');
             if (d) d.textContent = 'Cuántos ' + target + ' vale 1 ' + monedaCfgGet().base + '. Solo es una referencia: tus datos no se tocan.';
@@ -8679,7 +9191,7 @@
             try { localStorage.removeItem('notasLocales'); localStorage.removeItem('notasAdjuntos'); } catch (e) {}
             try { localStorage.removeItem('maatlyMesActivo'); localStorage.removeItem('kbFiltroWidget'); localStorage.removeItem('maatlyApartadosPozo'); } catch (e) {}
             try { localStorage.setItem('defaultSalario', '0'); localStorage.setItem('defaultAhorro', '0'); } catch (e) {}
-            try { localStorage.removeItem('tasaCambio'); localStorage.removeItem('nombreUsuario'); localStorage.removeItem('maatlyFinanzasCfg'); localStorage.removeItem('maatlyIngresoHist'); } catch (e) {}
+            try { localStorage.removeItem('tasaCambio'); localStorage.removeItem('nombreUsuario'); localStorage.removeItem('maatlyPerfil'); localStorage.removeItem('maatlyFinanzasCfg'); localStorage.removeItem('maatlyIngresoHist'); } catch (e) {}
             // Se conservan: temaEstilo, diseños del panel, claves del Agente, PIN y notificaciones
         }
 
@@ -8885,7 +9397,7 @@
             H('Adjuntos de Notas', [30, 16, 10, 8, 60, 24], adjFilas);
 
             const cfgFilas = [['Clave', 'Parte', 'Valor']];
-            ['temaEstilo', 'tasaCambio', 'maatlyFinanzasCfg', 'maatlyIngresoHist', 'maatlyApartadosPozo', 'defaultSalario', 'defaultAhorro', 'nombreUsuario', 'maatlyMesActivo', 'kbFiltroWidget', 'maatlyLayoutInicio', 'maatlyLayoutHistorico', 'kanbanMigrado'].forEach(k => {
+            ['temaEstilo', 'tasaCambio', 'maatlyFinanzasCfg', 'maatlyIngresoHist', 'maatlyPerfil', 'maatlyApartadosPozo', 'defaultSalario', 'defaultAhorro', 'nombreUsuario', 'maatlyMesActivo', 'kbFiltroWidget', 'maatlyLayoutInicio', 'maatlyLayoutHistorico', 'kanbanMigrado'].forEach(k => {
                 const v = crudo(k);
                 if (v === '') return;
                 xlTrocear(v, 30000).forEach((parte, i) => { cfgFilas.push([k, i + 1, parte]); });
@@ -9198,6 +9710,8 @@
                             if(data.defaultSalario) localStorage.setItem('defaultSalario', data.defaultSalario);
                             if(data.defaultAhorro) localStorage.setItem('defaultAhorro', data.defaultAhorro);
                             if(data.nombreUsuario) localStorage.setItem('nombreUsuario', data.nombreUsuario);
+                            if(data.maatlyPerfil) localStorage.setItem('maatlyPerfil', data.maatlyPerfil);   /* v0.50: el perfil viaja en los respaldos */
+                            if(data.nombreUsuario && typeof perfilSet === 'function') perfilSet({ nombre: data.nombreUsuario });   /* v0.50: espejo coherente en el perfil */
                             if(data.maatlyLayoutInicio) localStorage.setItem('maatlyLayoutInicio', data.maatlyLayoutInicio);
                             if(data.maatlyLayoutHistorico) localStorage.setItem('maatlyLayoutHistorico', data.maatlyLayoutHistorico);
                             if(data.maatlyApartadosPozo) localStorage.setItem('maatlyApartadosPozo', data.maatlyApartadosPozo);   /* v0.25.5 */
