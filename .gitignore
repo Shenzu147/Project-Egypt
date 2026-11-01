@@ -1,0 +1,16 @@
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Archivos locales de esta máquina (el lanzador .lnk lleva rutas absolutas)
+*.lnk
+
+# Artefactos de herramientas
+node_modules/
+package.json
+package-lock.json
+pnpm-lock.yaml
+bun.lock
+yarn.lock
+agent-manager.json
