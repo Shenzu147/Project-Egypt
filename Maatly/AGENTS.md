@@ -11,13 +11,13 @@
 ## Estado actual (01/11/2026)
 
 - **Maatly** es una app personal de finanzas en español: ingresos y gastos, planes de ahorro, cierres de mes, sobregasto, calendario, tablero de actividades y asistente IA.
-- **Trunk:** `Maatly_v0.45.html` — 895.497 B / 10.692 líneas, MD5 `6F7A9CD8…`, `VER_APP = 'v0.45'`.
-- **Raíz:** v0.44 (padre inmediato, en git) + v0.45 (vivo). v0.42 y v0.43 ya no están en la raíz: v0.43 vive en `respaldo/` con el cierre de la era v0.42.
+- **Trunk:** `Maatly.html` (ex `Maatly_v0.45.html`, renombrado 01/11) — 895.497 B / 10.692 líneas, MD5 `6F7A9CD8…`, `VER_APP = 'v0.45'`. **Nombre fijo**: las próximas entregas editan ESTE archivo en situ; no hay copias por versión.
+- **Raíz:** solo el trunk. Las versiones previas viven en commits de git (v0.44 es el padre) y en `respaldo/` (cierre de la era v0.42 + v0.43).
 - **Forma:** un archivo HTML único con CSS y JavaScript en línea; los datos viven en `localStorage`. Sin build ni dependencias locales.
-- **Repo:** git en `C:\Users\jdeb1\Project Egypt` (raíz); el proyecto vive en `Maatly/`. **Git es el respaldo** (regla del plan 51): cada versión se commitea, nunca reescribir la historia.
+- **Repo:** git en `C:\Users\jdeb1\Project Egypt` (raíz); el proyecto vive en `Maatly/`. **Git es el respaldo** (regla del plan 51): nunca reescribir la historia. Los commits se hacen SOLO al «Finalizar sesion» (ver plan 53).
 - **Destino:** Supabase (PostgreSQL + Auth con Google), cuentas individuales que empiezan vacías, y modo sin conexión con IndexedDB y cola de sincronización.
 - **Planes:** `.kilo/plans/AAAA-MM-DD-tema.md`. Sin plan no hay código (`require_plan_for_code: true`).
-- **Memoria:** `BITACORA.md` guarda el detalle por fecha/plan y se lee bajo demanda (`grep`). Este archivo se mantiene compacto (< ~150 líneas). El comando `/memoria` (`opencode.json`) sincroniza ambos al cerrar sesión.
+- **Memoria (regla del usuario 01/11, plan 53):** `AGENTS.md` = **instrucciones permanentes** (enrutamiento, reglas, convenciones; cambia solo cuando el usuario dicta una regla). `BITACORA.md` = **registro de lo hecho**; PROHIBIDO escribir memoria durante la sesión. La frase exacta **«Finalizar sesion»** ejecuta el ritual del comando `/memoria` (`opencode.json`): entrada del día en BITACORA + Estado/Cambios/Pendientes de este archivo + **commit único** de todo lo pendiente + resumen de cierre en 1–3 líneas. Este archivo se mantiene compacto (< ~150 líneas).
 
 ## Cambios recientes
 
@@ -60,12 +60,13 @@
 - Prohibido `catch` vacío. Los errores se registran y, si afectan datos, se muestran al usuario.
 - Sin dependencias nuevas sin un plan aprobado.
 
-## Convenciones de entrega
+## Convenciones de entrega (regla del usuario 01/11, plan 53)
 
-- Cada cambio entregado es una **versión nueva** (`Maatly_vX.Y.html`) con `VER_APP` bumpeado; nunca se sobrescribe una versión anterior.
-- Verificación mínima antes de entregar: `node --check` de cada bloque `<script>` en línea · comparación de IDs contra la versión anterior · SRI recalculado si se tocan CDNs · sonda real (Edge headless + CDP) cuando el cambio afecte arranque o CSP.
-- El respaldo es **git** (cada versión se commitea: nunca reescribir la historia). `respaldo/` queda suspendido y solo conserva el cierre de la era v0.42. Los cierres se documentan en BITACORA con tamaño, líneas y MD5.
-- Los archivos locales de la máquina (`.lnk` del lanzador) no van a git: ignorados vía `.gitignore`.
+- **Archivo único:** se trabaja SIEMPRE sobre `Maatly.html`, editándolo en situ. PROHIBIDO crear copias por versión para una entrega. La numeración vive en `VER_APP` (la sube cada entrega funcional: toast/Ajustes/XLSX) y el historial vive en git.
+- **«Respaldo»** (palabra exacta del usuario): genera copia byte-idéntica en `respaldo/Maatly_<VER>_<AAAAMMDD-HHmm>.html`. Solo disco: sin commit inmediato.
+- **Git al cierre:** PROHIBIDO commitear durante la sesión. Con «Finalizar sesion» se commitea todo: `Maatly.html` + memoria + planes + respaldos pendientes. Nunca reescribir la historia de git.
+- Verificación mínima antes de dar un cambio por terminado: `node --check` de cada bloque `<script>` en línea · comparación de IDs contra el estado previo · SRI recalculado si se tocan CDNs · sonda real (Edge headless + CDP) cuando el cambio afecte arranque o CSP.
+- Los archivos locales de la máquina (`.lnk` del lanzador) no van a git: ignorados vía `.gitignore`. El `.lnk` apunta a `Maatly.html` — nombre fijo, no se re-apunta más.
 - Emojis: solo se conserva el botón 😊 de Notas; el resto usa SVG o tokens del tema.
 - Los archivos usan UTF-8 y CRLF (git lo normaliza).
 
@@ -86,7 +87,7 @@ Responsabilidad: generación de código y ejecución.
 
 GUARDRAILS:
 - PROHIBIDO escribir código sin que exista un plan en `.kilo/plans/` y que ese plan haya sido leído.
-- Escribir primero en un archivo de trabajo (`Maatly_vX.Y.html` nuevo) o en una rama. Nunca sobrescribir la versión entregada sin verificación previa.
+- Editar SIEMPRE sobre `Maatly.html` (en situ; sin copias por versión, plan 53). Verificar el trunk después de cada cambio; si queda roto, no seguir escribiendo sobre él.
 - Ejecutar verificaciones locales cada 3 archivos modificados:
   - `node --check` sobre cada bloque `<script>` extraído;
   - comparación de IDs de elementos contra la versión anterior;
