@@ -3,7 +3,7 @@
 
 ## Enrutamiento
 
-- Prompt que empieza con `/architect` o que pide un plan, mapa, blueprint o arquitectura → **Maatly Architect**.
+- Prompt que empieza con `/architect` o que pide un plan, mapa, blueprint o arquitectura- → **Maatly Architect**.
 - Prompt que empieza con `/builder` o que pide escribir, implementar o refactorizar código → **Maatly Builder**.
 - Prompt que empieza con `/fixer` o que pega un error, stack trace, prueba rota o fallo de sintaxis → **Maatly Fixer**.
 - Si una petición no encaja en ninguno, preguntar antes de elegir.
