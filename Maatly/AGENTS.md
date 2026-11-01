@@ -1,19 +1,35 @@
 <!-- Maatly Agent Routing Rules -->
-# Maatly — Reglas de enrutamiento de agentes
+# Maatly — Reglas de enrutamiento y contexto
 
 ## Enrutamiento
 
-- Prompt que empieza con `/architect` o que pide un plan, mapa, blueprint o arquitectura- → **Maatly Architect**.
+- Prompt que empieza con `/architect` o que pide un plan, mapa, blueprint o arquitectura → **Maatly Architect**.
 - Prompt que empieza con `/builder` o que pide escribir, implementar o refactorizar código → **Maatly Builder**.
 - Prompt que empieza con `/fixer` o que pega un error, stack trace, prueba rota o fallo de sintaxis → **Maatly Fixer**.
 - Si una petición no encaja en ninguno, preguntar antes de elegir.
 
-## Contexto del proyecto (leer antes de cualquier tarea)
+## Estado actual (01/11/2026)
 
 - **Maatly** es una app personal de finanzas en español: ingresos y gastos, planes de ahorro, cierres de mes, sobregasto, calendario, tablero de actividades y asistente IA.
-- **Estado actual:** un archivo HTML único (`Maatly_vX.Y.html`) con CSS y JavaScript en línea. Los datos viven en `localStorage`.
+- **Trunk:** `Maatly_v0.44.html` — 896.797 B / 10.707 líneas, MD5 `9BF3860A…`, `VER_APP = 'v0.44'`.
+- **Forma:** un archivo HTML único con CSS y JavaScript en línea; los datos viven en `localStorage`. Sin build ni dependencias locales.
+- **Repo:** git en `C:\Users\jdeb1\Project Egypt` (raíz); el proyecto vive en `Maatly/`. Último commit: `V.0.1` (v0.43 + plan de CDN).
 - **Destino:** Supabase (PostgreSQL + Auth con Google), cuentas individuales que empiezan vacías, y modo sin conexión con IndexedDB y cola de sincronización.
-- Cada cambio entregado es una versión nueva (`vX.Y+1`). Nunca se sobrescribe una versión anterior.
+- **Planes:** `.kilo/plans/AAAA-MM-DD-tema.md`. Sin plan no hay código (`require_plan_for_code: true`).
+- **Memoria:** `BITACORA.md` guarda el detalle por fecha/plan y se lee bajo demanda (`grep`). Este archivo se mantiene compacto (< ~150 líneas). El comando `/memoria` (`opencode.json`) sincroniza ambos al cerrar sesión.
+
+## Cambios recientes
+
+- **01/11 · v0.44** — CSP corregida (va al inicio del `<head>`; `frame-src`, `connect-src` y `font-src` completos), `VER_APP` v0.44, fix del arranque en perfil limpio (la demo se sembraba antes de `MONEDAS`) y `.lnk` re-apuntado. Detalle: BITACORA, plan 50.
+- **31/10 · v0.43** — versiones CDN fijadas + SRI `sha384` (7/7 verificados) + primera CSP. Plan `2026-11-01-cdn-seguridad`.
+- **31/10 · v0.42** — cadencia Mensual/Quincenal/Semanal, renovación con día exacto y aviso N días antes, fix de `finanzasCfgSet`. Plan 49.
+- **31/10 · v0.25.50** — filtros de Movimientos/Actividades y ventana 1M/3M/12M en «Gasto por categoría». Plan 48.
+
+## Pendientes
+
+- **Plan `2026-11-01-card-te-queda`** (v0.44 → v0.45): quitar la etiqueta de período y el aviso de renovación de la card «Te queda»; conservar monto, débito del tramo y meta.
+- **QA acumulado era v0.39→v0.44**: checklists en BITACORA (planes 49 y 50), incluida la prueba manual de CSP, adjuntos PDF, calendario, agente y notificaciones.
+- **Deudas:** commit de v0.43/v0.44 y de los planes nuevos · rotar la API key de Gemini · talón 2 (accessors raw e `historialUltimate`) · talón 3 (8 CDNs: sin red la app muere) · piloto Supabase (schema v1 con `ingresos_hist`, retiros con `modo`, `kanbanEstados` con `esCierre`, preferencias JSONB + Google OAuth + Import como puente).
 
 ## Principios de arquitectura (no negociables)
 
@@ -40,8 +56,17 @@
 - Todo dato del usuario que entre a HTML pasa por escape, o se renderiza con `textContent`.
 - Prohibido guardar claves o tokens en texto plano en el cliente.
 - Librerías externas: versión fijada (nunca `@latest`) y atributo `integrity` cuando el CDN lo permita.
+- La CSP va **antes** de cualquier recurso en el `<head>`; si va después, no gobierna lo ya cargado.
 - Prohibido `catch` vacío. Los errores se registran y, si afectan datos, se muestran al usuario.
 - Sin dependencias nuevas sin un plan aprobado.
+
+## Convenciones de entrega
+
+- Cada cambio entregado es una **versión nueva** (`Maatly_vX.Y.html`) con `VER_APP` bumpeado; nunca se sobrescribe una versión anterior.
+- Verificación mínima antes de entregar: `node --check` de cada bloque `<script>` en línea · comparación de IDs contra la versión anterior · SRI recalculado si se tocan CDNs · sonda real (Edge headless + CDP) cuando el cambio afecte arranque o CSP.
+- Respaldos en `respaldo/` solo cuando el usuario lo pida; el cierre se documenta en BITACORA con tamaño, líneas y MD5.
+- Emojis: solo se conserva el botón 😊 de Notas; el resto usa SVG o tokens del tema.
+- Los archivos usan UTF-8 y CRLF (git lo normaliza).
 
 ## Maatly Architect
 

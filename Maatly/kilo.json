@@ -1,0 +1,8 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "default_agent": "code",
+  "keybinds": {
+    "agent_cycle": "shift+tab",
+    "agent_cycle_reverse": "tab"
+  }
+}
