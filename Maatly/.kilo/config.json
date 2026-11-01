@@ -1,0 +1,25 @@
+{
+  "project": {
+    "name": "Maatly",
+    "include": [
+      "AGENTS.md",
+      "BITACORA.md",
+      ".kilo/plans/"
+    ]
+    ,
+    "exclude": [
+      "node_modules/",
+      ".git/",
+      "dist/",
+      "build/**"
+    ],
+    "settings": {
+      "auto_analyze_errors": true,
+      "default_agent_mode": "plan",
+      "require_plan_for_code": true
+    }
+  },
+  "custom_commands": {
+    "test": "npm test"
+  }
+}
