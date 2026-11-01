@@ -64,7 +64,8 @@
 
 - Cada cambio entregado es una **versión nueva** (`Maatly_vX.Y.html`) con `VER_APP` bumpeado; nunca se sobrescribe una versión anterior.
 - Verificación mínima antes de entregar: `node --check` de cada bloque `<script>` en línea · comparación de IDs contra la versión anterior · SRI recalculado si se tocan CDNs · sonda real (Edge headless + CDP) cuando el cambio afecte arranque o CSP.
-- Respaldos en `respaldo/` solo cuando el usuario lo pida; el cierre se documenta en BITACORA con tamaño, líneas y MD5.
+- El respaldo es **git** (cada versión se commitea: nunca reescribir la historia). `respaldo/` queda suspendido y solo conserva el cierre de la era v0.42. Los cierres se documentan en BITACORA con tamaño, líneas y MD5.
+- Los archivos locales de la máquina (`.lnk` del lanzador) no van a git: ignorados vía `.gitignore`.
 - Emojis: solo se conserva el botón 😊 de Notas; el resto usa SVG o tokens del tema.
 - Los archivos usan UTF-8 y CRLF (git lo normaliza).
 

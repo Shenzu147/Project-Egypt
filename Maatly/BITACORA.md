@@ -99,6 +99,18 @@ Primera pasada de seguridad de dependencias: versiones **fijadas** (Tailwind `3.
 
 ---
 
+## 01/11/2026 — plan 51 «Limpieza de carpeta: git como único respaldo» ✅
+
+A petición del usuario («organizar la carpeta; solo conservar lo necesario»). Auditoría previa: 62 archivos en `respaldo/` (26,9 MB de HTML + 293 KB de JS de parches v0.23–v0.25, todos aplicados al trunk), `Maatly_v0.42.html` en la raíz byte-idéntico a su cierre (`116D9626…`) y `Maatly.lnk` versionado con rutas locales.
+
+- **Regla nueva: git es el respaldo.** Cada versión comprometida vive en el historial; la carpeta `respaldo/` queda suspendida como archivo histórico y conserva SOLO `respaldo/Maatly_v0.42_cierre31oct.html` (último estado de la era v0.42, MD5 `116D9626…`).
+- **Borrados 61 archivos** (43 HTML v0.21→v0.25 + 18 JS de parches): estados `_pre*`, cierres `_cierre30oct`/`_cierre31oct` de eras superadas y `v025_*.js`/`*_edits_v0.24.js`. Recuperables vía `git show`.
+- **La raíz no se toca (decisión del usuario)**: v0.42, v0.43 y v0.44 conviven.
+- **Higiene git**: `.gitignore` nuevo en la raíz (basura de OS, `*.lnk`, artefactos de herramientas) y `Maatly.lnk` fuera del índice de git (queda solo local).
+- Plan `2026-11-01-limpieza-carpeta.md`; commits de seguridad, limpieza e higiene separados y auditable en `git log`.
+
+---
+
 ## 31/10/2026 — plan 49 «Era v0.39→v0.42: moneda canónica (v0.40) · cadencia (v0.41) · renovación (v0.42)» + TRUNK RENOMBRADO A `Maatly_v0.42.html` + CIERRE DE SESIÓN ✅
 
 Cierre de la era que arrancó con el roadmap-guardado del usuario (31/oct): varias sesiones encadenadas SIN escritura de memoria hasta hoy. **La fuente del detalle técnico completo sigue siendo el roadmap `C:\Users\jdeb1\.opencode\plan\maatly-v0.39-roadmap.md`** (una entrada por ronda con su huella MD5 y decisiones); este plan 49 es el digest de procedencia + los artefactos del cierre.
