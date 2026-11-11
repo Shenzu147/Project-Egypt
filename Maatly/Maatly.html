@@ -2159,7 +2159,12 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.52';
+        const VER_APP = 'v0.55';
+
+        /* v0.53: Agentes IA (GLM/TG) EN PAUSA — flag reflotable: false los reintroduce sin borrar código.
+           Solo oculta UI: items 'coaching' del centro, bloque de estado en la sidebar y sub-bloques
+           del panel de Ajustes (queda SOLO el PIN). Los canales de push de Notificaciones NO se tocan. */
+        const AGENTES_EN_PAUSA = true;
 
         let chartHistBar = null;
         let chartHistPie = null;
@@ -2238,6 +2243,8 @@
         // v0.8: sin claves embebidas. La clave del agente se configura en Ajustes -> Asistente IA.
 
         function actualizarEstadoConexionAI() {
+            /* v0.53: agentes en pausa — el bloque «Agente Maatly · Conectado» de la sidebar queda oculto (reflotable) */
+            if (AGENTES_EN_PAUSA) { const sb = document.getElementById('sidebarAiStatus'); if (sb) sb.style.display = 'none'; }
             if (typeof agModeloActivo !== 'function') return;
             const m = agModeloActivo();
             const dot = document.getElementById('dotAiStatus');
@@ -5302,6 +5309,7 @@
                 'nf.perm.nosoportado': 'No soportado',
                 'nf.perm.falta': 'Falta conceder',
                 'nf.perm.btn': 'Activar en este equipo',
+                'nf.perm.ayuda': 'Si el permiso quedó bloqueado, ábrelo desde el candado o el icono junto a la dirección del navegador y vuelve a intentarlo.',
                 'nf.via': 'Vía push móvil: ',
                 'nf.via.ninguna': 'Ninguna',
                 'nf.ntfyTema': 'Tema ntfy: ',
@@ -5361,6 +5369,12 @@
                 'nf.push.ren': 'Maatly: renovación de saldo',
                 'nf.push.ok': 'Enviado — revisa tu móvil',
                 'nf.push.no': 'No se pudo enviar. Revisa el canal, el tema y el token',
+                'nf.canal.probeTit': 'Prueba de Maatly',
+                'nf.canal.probeBody': 'Si lees esto en tu móvil, el push real funciona.',
+                'nf.prevAviso.tit': 'Así llegará el aviso',
+                'nf.prevAviso.d': 'Ejemplo real (el del botón de abajo) con el mismo estilo del centro de notificaciones.',
+                'nt.unidadH': '{a} h',
+                'nt.unidadM': '{a} min',
                 'pf.toastErr': 'El perfil no se pudo guardar — revisa la consola (F12)'
             },
             en: {
@@ -6264,6 +6278,7 @@
                 'nf.perm.nosoportado': 'Not supported',
                 'nf.perm.falta': 'Not granted yet',
                 'nf.perm.btn': 'Enable on this device',
+                'nf.perm.ayuda': 'If the permission got blocked, open it from the padlock or the icon next to the browser address bar and try again.',
                 'nf.via': 'Mobile push via: ',
                 'nf.via.ninguna': 'None',
                 'nf.ntfyTema': 'ntfy topic: ',
@@ -6323,6 +6338,12 @@
                 'nf.push.ren': 'Maatly: balance renewal',
                 'nf.push.ok': 'Sent — check your phone',
                 'nf.push.no': 'The send failed. Check the channel, the topic and the token',
+                'nf.canal.probeTit': 'Test from Maatly',
+                'nf.canal.probeBody': 'If you read this on your phone, real push works.',
+                'nf.prevAviso.tit': 'This is how the alert will look',
+                'nf.prevAviso.d': 'Real example (the button below) with the same style as the notification center.',
+                'nt.unidadH': '{a} h',
+                'nt.unidadM': '{a} min',
                 'pf.toastErr': 'The profile could not be saved — check the console (F12)'
             }
         };
@@ -12030,6 +12051,9 @@
             let html = '';
 
             html += '<div class="space-y-6">';
+
+            /* v0.53: agentes en pausa — los sub-bloques del agente (modelo/clave/guías/conexión/añadir) quedan ocultos; código intacto y reflotable */
+            if (!AGENTES_EN_PAUSA) {
             html += '  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4">';
             html += '    <div><h4 class="font-bold text-slate-800 dark:text-white text-sm">' + ti('ag.titModelo') + '</h4><p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">' + ti('ag.descModelo') + '</p></div>';
             html += '    <select id="agSelModelo" class="sel-maatly cursor-pointer px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500">';
@@ -12078,8 +12102,9 @@
             html += '    </div>';
             html += '    <button id="agBtnNuevoModelo" class="mt-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-semibold rounded-lg text-xs">' + ti('ag.btnAgregar') + '</button>';
             html += '  </div>';
+            }   /* fin !AGENTES_EN_PAUSA */
 
-            html += '  <div class="pt-2 border-t border-slate-200 dark:border-slate-700">';
+            html += '  <div' + (AGENTES_EN_PAUSA ? '' : ' class="pt-2 border-t border-slate-200 dark:border-slate-700"') + '>';
             html += '    <h4 class="font-bold text-slate-800 dark:text-white text-sm mb-1">' + ti('pin.u.tit') + '</h4>';
             html += '    <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">' + ti('pin.u.desc') + '</p>';
             html += '    <div class="flex flex-wrap items-center gap-2">';
@@ -12208,6 +12233,7 @@
             html += '      <div class="text-sm text-slate-700 dark:text-slate-200">' + ti('nf.permiso') + '<span id="ntfPermisoEstado" class="font-bold ' + (permisoNtf === 'granted' ? 'text-green-500' : 'text-amber-500') + '">' + (permisoNtf === 'granted' ? ti('nf.perm.concedido') : (permisoNtf === 'denied' ? ti('nf.perm.bloqueado') : (permisoNtf === 'no-soportado' ? ti('nf.perm.nosoportado') : ti('nf.perm.falta')))) + '</span> <button id="ntfBtnPermiso" class="ml-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-[11px]">' + ti('nf.perm.btn') + '</button></div>';
             html += '      <label class="text-sm text-slate-700 dark:text-slate-200">' + ti('nf.via') + '<select id="ntfPushVia" class="sel-maatly cursor-pointer focus:border-indigo-500 ml-1 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-xs"><option value="ninguno"' + (cfg.pushVia === 'ninguno' ? ' selected' : '') + '>' + ti('nf.via.ninguna') + '</option><option value="ntfy"' + (cfg.pushVia === 'ntfy' ? ' selected' : '') + '>ntfy</option><option value="telegram"' + (cfg.pushVia === 'telegram' ? ' selected' : '') + '>Telegram</option></select></label>';
             html += '    </div>';
+            html += (permisoNtf === 'denied' ? '    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">' + ti('nf.perm.ayuda') + '</p>' : '');   /* v0.54: guía cuando el permiso quedó bloqueado */
             html += '    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">';
             html += '      <label class="text-sm text-slate-700 dark:text-slate-200">' + ti('nf.ntfyTema') + '<input id="ntfNtfyTopic" value="' + agEscape(cfg.ntfyTopic) + '" placeholder="maatly-' + agSufijoSugerido() + '" class="ml-1 w-40 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-xs"></label>';
             html += '      <label class="text-sm text-slate-700 dark:text-slate-200">' + ti('nf.tgToken') + '<input id="ntfTgToken" type="password" value="' + agEscape(cfg.tgToken) + '" placeholder="123456:ABC..." class="ml-1 w-36 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-xs"></label>';
@@ -12271,6 +12297,13 @@
             html += '    </div>';
 
             html += '    <div class="pt-1"><button id="ntfBtnProbarDinero" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-xs">' + ti('nf.btnPruebaD') + '</button><span class="text-[11px] text-slate-500 dark:text-slate-400 ml-2">' + ti('nf.pruebaHint') + '</span></div>';
+
+            /* v0.53: previsualización «Así llegará el aviso» — mismo pintor que el centro (notifItemHTML), no interactiva */
+            html += '    <div class="border border-slate-200 dark:border-slate-700/80 rounded-lg p-3">';
+            html += '      <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">' + ti('nf.prevAviso.tit') + '</p>';
+            html += '      <div class="pointer-events-none border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800" id="ntfPrevAviso">' + notifItemHTML({ k: 'prev_demo', tp: 'ahorro', ref: '', t: ti('nf.prueba.tit'), c: tiPlantilla('nf.prueba.cuerpo', { m: ntfFmt(80) }), f: Date.now(), vivo: true, u: true }) + '</div>';
+            html += '      <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">' + ti('nf.prevAviso.d') + '</p>';
+            html += '    </div>';
             html += '  </div>';
             html += '</div>';
             cont.innerHTML = html;
@@ -12341,7 +12374,7 @@
             if (btnProbarNtf) btnProbarNtf.addEventListener('click', async () => {
                 triggerHaptic();
                 ntfGuardarCfg();
-                const ok = await agEnviarPush('Prueba de Maatly', 'Si lees esto en tu móvil, el push real funciona.');
+                const ok = await agEnviarPush(ti('nf.canal.probeTit'), ti('nf.canal.probeBody'));   /* v0.53: payload i18n (antes literal ES) */
                 mostrarToast(ok ? ti('nf.push.ok') : ti('nf.push.no'), ok ? 'success' : 'error');
             });
 
@@ -12420,6 +12453,7 @@
             const cfg = agGetNotifCfg();
             const clave = 'pl_' + plan.id + '_' + (plan.ciclo || 0);
             const cuerpo = tiPlantilla('nf.meta.cuerpo', { n: plan.nombre, a: ntfFmt(plan.montoActual) });
+            ntfSistema(ti('nf.meta.tit'), cuerpo, 'ahorro');   /* v0.54: también fuera (el PC celebra con el modal) */
             try { notifRegistrar(ti('nf.meta.tit'), cuerpo, clave, 'ahorro', plan.id || ''); } catch (e) {}
             try { notifRefrescar(); } catch (e) {}
             if (cfg.ahPush) agEnviarPush(tiPlantilla('nf.push.meta', { n: plan.nombre }), cuerpo);
@@ -12815,13 +12849,59 @@
             return t;
         }
 
-        function agNotificarLocal(titulo, cuerpo, claveCentro, tipoCentro, refCentro) {
+        /* v0.54: logo «M» para las notificaciones del sistema (canvas → data-URI, cacheado) */
+        let ntfIconoCache = null;
+        function ntfIconoData() {
+            if (ntfIconoCache) return ntfIconoCache;
             try {
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    const n = new Notification(titulo, { body: cuerpo, tag: 'maatly-' + Date.now() });
-                    n.onclick = () => { try { window.focus(); cambiarVista('vistaActividades'); } catch (e) {} };
-                }
-            } catch (e) {}
+                const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+                const x = c.getContext('2d');
+                const r = 14;
+                x.beginPath();
+                x.moveTo(r, 0); x.lineTo(64 - r, 0); x.quadraticCurveTo(64, 0, 64, r);
+                x.lineTo(64, 64 - r); x.quadraticCurveTo(64, 64, 64 - r, 64);
+                x.lineTo(r, 64); x.quadraticCurveTo(0, 64, 0, 64 - r);
+                x.lineTo(0, r); x.quadraticCurveTo(0, 0, r, 0);
+                x.closePath();
+                const g = x.createLinearGradient(0, 0, 64, 64);
+                g.addColorStop(0, '#4f46e5'); g.addColorStop(1, '#7c3aed');
+                x.fillStyle = g; x.fill();
+                x.fillStyle = '#ffffff';
+                x.font = 'bold 34px Arial, sans-serif';
+                x.textAlign = 'center'; x.textBaseline = 'middle';
+                x.fillText('M', 32, 35);
+                ntfIconoCache = c.toDataURL('image/png');
+            } catch (e) { ntfIconoCache = ''; }
+            return ntfIconoCache;
+        }
+
+        /* v0.54: notificación FUERA de la app — escritorio vía constructor (clic por tipo);
+           si el constructor falla (Android lo prohíbe) → service worker showNotification (v0.55) */
+        function ntfSistema(titulo, cuerpo, tipo) {
+            const vista = (tipo === 'ahorro' || tipo === 'cierre') ? 'vistaInicio' : 'vistaActividades';
+            let permiso = null;
+            try { if ('Notification' in window) permiso = Notification.permission; } catch (e) { permiso = null; }
+            if (permiso !== 'granted') return;
+            const opts = { body: cuerpo, tag: 'maatly-' + Date.now(), icon: ntfIconoData() || undefined, data: { vista: vista } };
+            let enviada = false;
+            try {
+                const n = new Notification(titulo, opts);
+                n.onclick = function () { try { window.focus(); cambiarVista(vista); } catch (e) {} };
+                enviada = true;
+            } catch (eConstr) { /* Android: constructor ilegal → cae al SW */ }
+            if (!enviada) {
+                try {
+                    if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+                        navigator.serviceWorker.getRegistration().then(function (r) {
+                            if (r && r.showNotification) r.showNotification(titulo, opts).catch(function () {});
+                        }).catch(function () {});
+                    }
+                } catch (eSw) {}
+            }
+        }
+
+        function agNotificarLocal(titulo, cuerpo, claveCentro, tipoCentro, refCentro) {
+            ntfSistema(titulo, cuerpo, tipoCentro);
             mostrarToast(titulo + ' — ' + cuerpo.split('\n')[0], 'info');
             try { notifRegistrar(titulo, cuerpo, claveCentro, tipoCentro, refCentro); } catch (e) {}
         }
@@ -12847,7 +12927,8 @@
                 });
             }
 
-            if ((cfg.pcAgenda || cfg.pushAgenda) && cfg.horaAgenda) {
+            /* v0.53: agentes en pausa — sin coaching diario del agente; el item vivo «Agenda de hoy» del centro (tipo 'agenda') sigue vivo */
+            if (!AGENTES_EN_PAUSA && (cfg.pcAgenda || cfg.pushAgenda) && cfg.horaAgenda) {
                 const ahora = new Date();
                 const [hh, mm] = cfg.horaAgenda.split(':').map(x => parseInt(x, 10) || 0);
                 const limite = new Date(); limite.setHours(hh, mm, 0, 0);
@@ -12968,7 +13049,7 @@
                 if (recEnviados[a.id]) return;
                 const hh = notifP2(f.getHours()) + ':' + notifP2(f.getMinutes());
                 const faltan = Math.max(1, Math.round((f.getTime() - ahora.getTime()) / 60000));
-                const cuando = faltan >= 60 ? (Math.round(faltan / 60) + ' h') : (faltan + ' min');
+                const cuando = faltan >= 60 ? tiPlantilla('nt.unidadH', { a: Math.round(faltan / 60) }) : tiPlantilla('nt.unidadM', { a: faltan });   /* v0.53: unidades i18n */
                 const dd = Math.round((new Date(String(a.fecha).slice(0, 10) + 'T00:00:00') - new Date(hoyLocal + 'T00:00:00')) / 864e5);
                 const diaTxt = dd <= 0 ? ti('nt.diaHoy') : (dd === 1 ? ti('nt.diaMan') : (dd === 2 ? ti('nt.diaProc') : tiPlantilla('nt.diaFmt', { f: (typeof kbFmtFechaCorta === 'function' ? kbFmtFechaCorta(String(a.fecha).slice(0, 10)) : String(a.fecha).slice(0, 10)) })));
                 items.push({ k: 'p48_' + a.id, tp: 'proxima', ref: a.id, t: ti('nt.proximaT'), c: tiPlantilla('nt.proximaC', { a: a.titulo, d: diaTxt, h: hh, c: cuando }), f: f.getTime(), vivo: true });
@@ -12990,10 +13071,12 @@
                 items.push({ k: h.k, tp: h.tp || 'info', ref: h.ref || '', t: h.t, c: h.c, f: h.f || 0, vivo: false });
             });
 
+            /* v0.53: agentes en pausa — el centro no muestra nada del agente (items 'coaching', vivos ni históricos) */
+            const visibles = AGENTES_EN_PAUSA ? items.filter(i => i.tp !== 'coaching') : items;
             const L = notifLeidosGet();
-            items.forEach(i => { i.u = !L[i.k]; });
-            items.sort((x, y) => (y.f || 0) - (x.f || 0));
-            return items;
+            visibles.forEach(i => { i.u = !L[i.k]; });
+            visibles.sort((x, y) => (y.f || 0) - (x.f || 0));
+            return visibles;
         }
 
         function notifFormateaTs(f) {
@@ -13240,6 +13323,28 @@
             setTimeout(function () { try { notifRefrescar(); } catch (e) {} }, 800);
             setTimeout(function () { try { notifRefrescar(); } catch (e) {} }, 3000);
             setTimeout(agTickNotif, 4000);
+
+            /* v0.55: PWA — manifest + service worker de notificaciones, SOLO en contexto seguro
+               (https o localhost). En file:// no se inyecta nada y no hay ruido de consola. */
+            try {
+                const ctxSeguro = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                if (ctxSeguro) {
+                    if (!document.querySelector('link[rel="manifest"]')) {
+                        const lk = document.createElement('link');
+                        lk.rel = 'manifest'; lk.href = 'manifest.webmanifest';
+                        document.head.appendChild(lk);
+                    }
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.register('./maatly-sw.js').catch(function () {});
+                        navigator.serviceWorker.addEventListener('message', function (ev) {
+                            try {
+                                const d = ev.data || {};
+                                if (d && d.maatlyNotifClick && typeof cambiarVista === 'function') cambiarVista(String(d.maatlyNotifClick));
+                            } catch (eMsg) {}
+                        });
+                    }
+                }
+            } catch (ePwa) {}
         })();
 
         /* ================= FIN AGENTE MAATLY (v0.8) ================= */
