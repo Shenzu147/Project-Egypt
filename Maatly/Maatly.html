@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- v0.44: la CSP va ANTES de cualquier recurso; si va despues, no gobierna lo ya cargado. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net https://openrouter.ai https://generativelanguage.googleapis.com https://api.z.ai https://api.telegram.org https://ntfy.sh; frame-src 'self' blob: data:; worker-src 'self' blob: https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net https://openrouter.ai https://generativelanguage.googleapis.com https://api.z.ai https://api.telegram.org https://ntfy.sh https://*.supabase.co wss://*.supabase.co; frame-src 'self' blob: data:; worker-src 'self' blob: https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self';">   <!-- v0.56: + Supabase (I2a · Cuentas) -->
     <meta name="theme-color" id="metaThemeColor" content="#090d16">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1778,6 +1778,16 @@
                             <svg class="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-amber-500 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
                         </div>
                     </button>
+                    <button onclick="abrirCfgSeccion('cuenta')" class="group text-left bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:border-teal-400 dark:hover:border-teal-500 hover:shadow-md transition-all">   <!-- v0.56: Supabase I2a «Cuentas» -->
+                        <div class="flex items-center gap-4">
+                            <span class="p-3 bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400 rounded-2xl inline-flex items-center justify-center"><svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 10h-1.26A8 8 0 1 0 9 20h9a4 4 0 0 0 0-8z"></path></svg></span>
+                            <div class="flex-1 min-w-0">
+                                <h3 data-i18n="aj.titulo.cuenta" class="font-bold text-slate-800 dark:text-white text-[15px]">Cuenta y nube</h3>
+                                <p data-i18n="aj.sub.cuenta" class="text-xs text-slate-400 mt-1">Conecta tu cuenta de Google: opcional, la app funciona igual sin ella.</p>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-teal-500 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                    </button>
                     <button onclick="abrirCfgSeccion('agente')" class="group text-left bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:border-sky-400 dark:hover:border-sky-500 hover:shadow-md transition-all">
                         <div class="flex items-center gap-4">
                             <span class="p-3 bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400 rounded-2xl inline-flex items-center justify-center"><svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9h6v6H9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"></path></svg></span>
@@ -2011,6 +2021,16 @@
                     </div>
                 </div>
 
+                <!-- SECCIÓN: CUENTA Y NUBE (v0.56 · Supabase I2a) -->
+                <div id="cfgSeccionCuenta" class="hidden space-y-3">
+                    <button onclick="cerrarCfgSeccion()" data-i18n="aj.volver" class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-xs transition-colors">← Volver a Ajustes</button>
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                        <div id="cfgBodyCuenta" class="p-0">
+                            <p class="text-xs text-slate-400">Cargando panel de la cuenta…</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- SECCIÓN: DATOS -->
                 <div id="cfgSeccionDatos" class="hidden space-y-3">
                     <button onclick="cerrarCfgSeccion()" data-i18n="aj.volver" class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-xs transition-colors">← Volver a Ajustes</button>
@@ -2159,7 +2179,12 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.55';
+        const VER_APP = 'v0.56';
+
+        /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
+           Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
+           JAMÁS va al HTML). Con esto vacío, la app es 100 % local y no se carga ningún SDK. */
+        const SUPA_CFG = { url: 'https://pshtfyodoxxyzpwgmpoj.supabase.co', key: 'sb_publishable_uPUVWtNJl55Ft5QwfmWmfA_0dFvcQgH' };   /* v0.56 · I2a: claves del usuario (publishable = pública por diseño) */
 
         /* v0.53: Agentes IA (GLM/TG) EN PAUSA — flag reflotable: false los reintroduce sin borrar código.
            Solo oculta UI: items 'coaching' del centro, bloque de estado en la sidebar y sub-bloques
@@ -2187,7 +2212,8 @@
             finanzas:   { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h13M13 4l4 4-4 4M20 16H7M11 20l-4-4 4-4"></path></svg> ', tituloK: 'aj.titulo.finanzas', subK: 'aj.sub.finanzas' },
             agente:     { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> ', tituloK: 'aj.titulo.agente', subK: 'aj.sub.agente' },
             datos:      { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5c0-1.66 4-3 9-3s9 1.34 9 3-4 3-9 3-9-1.34-9-3z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg> ', tituloK: 'aj.titulo.datos', subK: 'aj.sub.datos' },
-            notif:      { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg> ', tituloK: 'aj.titulo.notif', subK: 'aj.sub.notif' }
+            notif:      { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg> ', tituloK: 'aj.titulo.notif', subK: 'aj.sub.notif' },
+            cuenta:     { icono: '<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 10h-1.26A8 8 0 1 0 9 20h9a4 4 0 0 0 0-8z"></path></svg> ', tituloK: 'aj.titulo.cuenta', subK: 'aj.sub.cuenta' }   /* v0.56: Supabase I2a */
         };
         window.abrirCfgSeccion = function(id) {
             triggerHaptic();
@@ -2205,6 +2231,7 @@
             if (st) st.textContent = ti(def.subK);
             window.cfgVistaActual = id;   /* v0.52: región viva para el repintado por idioma */
             if (id === 'datos') wdRefrescarUso(); /* v0.25.12: la línea de uso se recalcula al entrar a Datos */
+            if (id === 'cuenta') supaRenderPanel(); /* v0.56: el panel de la cuenta se pinta al entrar */
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
         window.cerrarCfgSeccion = function(silencioso) {
@@ -4425,6 +4452,22 @@
                 'aj.sub.datos': 'Copias de seguridad, restaurar y datos de prueba.',
                 'aj.titulo.notif': 'Notificaciones',
                 'aj.sub.notif': 'Cómo y cuándo te avisa Maatly: en la PC o en el celular.',
+                'aj.titulo.cuenta': 'Cuenta y nube',
+                'aj.sub.cuenta': 'Conecta tu cuenta de Google: opcional, la app funciona igual sin ella.',
+                'su.tit': 'Cuenta y nube',
+                'su.desc': 'Inicia sesión con tu cuenta de Google para tu identidad en la nube. La app funciona 100 % sin cuenta: tus datos viven en este dispositivo y en tus copias de seguridad.',
+                'su.sinCfgTit': 'Nube aún no configurada',
+                'su.sinCfgD1': 'Esta copia de Maatly todavía no tiene la conexión con Supabase (la nube de cuentas). Funciona completa sin ella.',
+                'su.sinCfgD2': 'Cuando la configuración esté lista, aquí verás el botón para entrar con Google.',
+                'su.noSdk': 'No se pudo cargar el módulo de conexión. Revisa tu conexión a internet y vuelve a abrir esta sección.',
+                'su.fileNota': 'Entrar con tu cuenta desde un archivo local no es posible: Google exige un sitio publicado. Usa la app desde su página web para iniciar sesión.',
+                'su.entrar': 'Continuar con Google',
+                'su.salir': 'Cerrar sesión',
+                'su.opcional': 'Opcional: puedes usar Maatly para siempre sin cuenta.',
+                'su.errSignIn': 'No se pudo iniciar el acceso con Google. Inténtalo de nuevo.',
+                'su.sinCfg': 'La nube no está configurada todavía.',
+                'su.soloHosted': 'El acceso con Google solo funciona en la app publicada (por su dirección web), no desde un archivo local.',
+                'su.sesion': 'Sesión iniciada con Google',
                 'ap.colores.t': 'Colores',
                 'ap.colores.d': 'Elige un tema. Se aplica al momento, solo en este dispositivo.',
                 'ap.colores.actuales': 'Colores actuales:',
@@ -5394,6 +5437,22 @@
                 'aj.sub.datos': 'Backups, restore and test data.',
                 'aj.titulo.notif': 'Notifications',
                 'aj.sub.notif': 'How and when Maatly alerts you: on your PC or your phone.',
+                'aj.titulo.cuenta': 'Account & cloud',
+                'aj.sub.cuenta': 'Connect your Google account: optional, the app works just the same without it.',
+                'su.tit': 'Account & cloud',
+                'su.desc': 'Sign in with your Google account for your cloud identity. The app works 100% without an account: your data lives on this device and in your backups.',
+                'su.sinCfgTit': 'Cloud not set up yet',
+                'su.sinCfgD1': 'This copy of Maatly does not have the Supabase connection (the accounts cloud) yet. It works fully without it.',
+                'su.sinCfgD2': 'Once the setup is ready, you will see the Google sign-in button here.',
+                'su.noSdk': 'The connection module could not be loaded. Check your internet connection and reopen this section.',
+                'su.fileNota': 'Signing in from a local file is not possible: Google requires a published site. Use the app from its web page to sign in.',
+                'su.entrar': 'Continue with Google',
+                'su.salir': 'Sign out',
+                'su.opcional': 'Optional: you can use Maatly forever without an account.',
+                'su.errSignIn': 'Could not start Google sign-in. Please try again.',
+                'su.sinCfg': 'The cloud is not set up yet.',
+                'su.soloHosted': 'Google sign-in only works in the published app (from its web address), not from a local file.',
+                'su.sesion': 'Signed in with Google',
                 'ap.colores.t': 'Colors',
                 'ap.colores.d': 'Pick a theme. It applies instantly, on this device only.',
                 'ap.colores.actuales': 'Current colors:',
@@ -13299,6 +13358,144 @@
             if (pin && pin.autoLock > 0 && !agEstaBloqueado() && Date.now() - agUltimaActividad > pin.autoLock * 60000) agBloquear();
         }
 
+        /* ---------- v0.56 · Supabase I2a «Cuentas» — login OPCIONAL ---------- */
+        /* La nube NO toca tus datos: solo la identidad. Con SUPA_CFG vacía la app es 100 % local
+           y no se descarga ningún SDK. La sesión la maneja supabase-js (localStorage sb-…). */
+        let supaCliente = null;      /* cliente supabase-js (null: sin config o SDK no cargó) */
+        let supaSesion = null;       /* sesión viva de auth (o null) */
+        function supaConfigurada() { return typeof SUPA_CFG === 'object' && !!SUPA_CFG.url && !!SUPA_CFG.key; }
+        function supaCargarSdk() {
+            return new Promise(function (cumple, falla) {
+                const ya = document.getElementById('sdkSupabase');
+                if (ya) {
+                    if (ya.dataset.cargado === '1') { cumple(); return; }   /* ya cargó: resolver al instante (v0.56) */
+                    ya.addEventListener('load', function () { cumple(); });
+                    ya.addEventListener('error', function () { falla(new Error('SDK de carga previa falló')); });
+                    return;
+                }
+                const s = document.createElement('script');
+                s.id = 'sdkSupabase';
+                s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js';
+                s.integrity = 'sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O';
+                s.crossOrigin = 'anonymous';
+                s.onload = function () { try { s.dataset.cargado = '1'; } catch (e) {} cumple(); };
+                s.onerror = function () { falla(new Error('No se pudo descargar el SDK de Supabase')); };
+                document.head.appendChild(s);
+            });
+        }
+        async function supaInit() {
+            if (!supaConfigurada() || supaCliente) return;
+            try {
+                await supaCargarSdk();
+                if (!window.supabase || typeof window.supabase.createClient !== 'function') throw new Error('SDK sin createClient');
+                supaCliente = window.supabase.createClient(SUPA_CFG.url, SUPA_CFG.key);
+                const r = await supaCliente.auth.getSession();
+                supaSesion = (r && r.data && r.data.session) ? r.data.session : null;
+                if (supaSesion && supaSesion.user) supaPerfilAsegurar(supaSesion.user);
+                supaCliente.auth.onAuthStateChange(function (evento, sesion) {
+                    supaSesion = sesion || null;
+                    if (supaSesion && supaSesion.user && (evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION')) supaPerfilAsegurar(supaSesion.user);
+                    supaRenderPanel();
+                });
+            } catch (e) {
+                console.warn('[Supa] init falló:', e && e.message);
+                supaCliente = null;
+            }
+            supaRenderPanel();
+        }
+        async function supaPerfilAsegurar(user) {
+            if (!supaCliente || !user || !user.id) return;
+            try {
+                const nombre = ((perfilGet().nombre || (user.email ? String(user.email).split('@')[0] : '')).trim()) || 'Maatly';
+                const r = await supaCliente.from('profiles').upsert({ id: user.id, nombre: nombre, idioma: idiomaApp() });
+                if (r && r.error) console.warn('[Supa] perfil:', r.error.message);
+            } catch (e) {
+                console.warn('[Supa] perfil no se pudo guardar:', e && e.message);
+            }
+        }
+        async function supaSignIn() {
+            triggerHaptic();
+            if (!supaConfigurada()) { mostrarToast(ti('su.sinCfg'), 'error'); return; }
+            if (location.protocol === 'file:') { mostrarToast(ti('su.soloHosted'), 'error'); return; }
+            if (!supaCliente) { mostrarToast(ti('su.noSdk'), 'error'); return; }
+            try {
+                const r = await supaCliente.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('#')[0] } });
+                if (r && r.error) throw new Error(r.error.message);
+            } catch (e) {
+                console.warn('[Supa] sign-in falló:', e && e.message);
+                mostrarToast(ti('su.errSignIn'), 'error');
+            }
+        }
+        async function supaSignOut() {
+            triggerHaptic();
+            if (!supaCliente) return;
+            try { await supaCliente.auth.signOut(); } catch (e) { console.warn('[Supa] sign-out falló:', e && e.message); }
+            supaSesion = null;   /* onAuthStateChange repinta; esto garantiza la limpieza visual */
+            supaRenderPanel();
+        }
+        function supaRenderPanel() {
+            const cont = document.getElementById('cfgBodyCuenta');
+            if (!cont) return;
+            const enFile = location.protocol === 'file:';
+            const user = (supaSesion && supaSesion.user) ? supaSesion.user : null;
+            const email = user && user.email ? String(user.email) : '';
+            const nombreSesion = user ? (((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || perfilGet().nombre || (email ? email.split('@')[0] : '')).trim() || 'Maatly') : '';
+            let html = '<div class="space-y-6">';
+            /* Sin config: guía honesta — la app funciona completa sin nube */
+            if (!supaConfigurada()) {
+                html += '<div class="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-2">';
+                html += '  <h4 class="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 10h-1.26A8 8 0 1 0 9 20h9a4 4 0 0 0 0-8z"></path></svg>' + ti('su.sinCfgTit') + '</h4>';
+                html += '  <p class="text-xs text-slate-500 dark:text-slate-400">' + ti('su.sinCfgD1') + '</p>';
+                html += '  <p class="text-xs text-slate-500 dark:text-slate-400">' + ti('su.sinCfgD2') + '</p>';
+                html += '</div>';
+                cont.innerHTML = html;
+                return;
+            }
+            /* Con config pero SDK no disponible */
+            if (!supaCliente) {
+                html += '<div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">';
+                html += '  <p class="text-xs text-amber-700 dark:text-amber-300">' + ti('su.noSdk') + '</p>';
+                html += '</div>';
+            }
+            /* Con sesión: identidad + salir */
+            if (user) {
+                html += '<div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-emerald-50/60 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800">';
+                html += '  <div class="flex items-center gap-3 min-w-0">';
+                html += '    <span class="p-2.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-full inline-flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0a4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></span>';
+                html += '    <div class="min-w-0">';
+                html += '      <p class="font-bold text-emerald-900 dark:text-emerald-200 text-sm truncate">' + agEscape(nombreSesion) + '</p>';
+                html += '      <p class="text-xs text-emerald-700 dark:text-emerald-300 truncate">' + agEscape(email) + '</p>';
+                html += '      <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">' + ti('su.sesion') + '</p>';
+                html += '    </div>';
+                html += '  </div>';
+                html += '  <button id="btnSupaSalir" class="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-bold rounded-lg text-xs transition-colors flex-shrink-0">' + ti('su.salir') + '</button>';
+                html += '</div>';
+            }
+            /* Sin sesión: botón de Google (solo hosted — en file:// Google no puede regresar) */
+            if (!user && !enFile) {
+                html += '<div class="flex flex-col items-stretch sm:items-start gap-3">';
+                html += '  <button id="btnSupaEntrar" class="px-5 py-3 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center sm:justify-start gap-3 shadow-sm">';
+                html += '    <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"></path><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"></path><path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"></path><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z"></path></svg>';
+                html += '    <span>' + ti('su.entrar') + '</span>';
+                html += '  </button>';
+                html += '  <p class="text-[11px] text-slate-400 dark:text-slate-500">' + ti('su.opcional') + '</p>';
+                html += '</div>';
+            }
+            /* Sin sesión en file://: nota honesta en lugar del botón muerto */
+            if (!user && enFile) {
+                html += '<div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4">';
+                html += '  <p class="text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2"><svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86l-8.5 14.72A1 1 0 002.6 20h18.8a1 1 0 00.81-1.42l-8.5-14.72a1 1 0 00-1.42 0z"></path></svg><span>' + ti('su.fileNota') + '</span></p>';
+                html += '</div>';
+            }
+            html += '</div>';
+            cont.innerHTML = html;
+            const btnEntrar = document.getElementById('btnSupaEntrar');
+            if (btnEntrar) btnEntrar.addEventListener('click', supaSignIn);
+            const btnSalir = document.getElementById('btnSupaSalir');
+            if (btnSalir) btnSalir.addEventListener('click', supaSignOut);
+        }
+        i18nRefrescar(supaRenderPanel);   /* v0.56: el panel de la cuenta se repinta al cambiar el idioma */
+
         /* ---------- Estado del sidebar y arranque ---------- */
         (function agInit() {
             try { localStorage.removeItem('geminiApiKey'); } catch (e) {}
@@ -13307,6 +13504,7 @@
             agSetModelos(agGetModelos());
             agRenderPanel();
             ntfRenderPanel();
+            supaInit();   /* v0.56: nube de cuentas — no-op si SUPA_CFG está vacía */
 
             const chatSub = document.getElementById('chatEstadoModelo');
             if (chatSub) chatSub.textContent = agModeloActivo().nombre + (agModeloActivo().clave ? ' conectado' : ' sin clave (modo local)');
