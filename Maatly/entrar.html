@@ -42,7 +42,9 @@
        · Mismo origen que Maatly.html → comparte la sesión de supabase-js
          (localStorage sb-<ref>-auth-token): un solo ingreso para la app,
          el portal y el panel admin (admin.html, Ronda B).
-       · Solo Google (provider ya habilitado en Supabase).
+       · Dos vías al MISMA cuenta (auto-linking por email de Supabase):
+         email + contraseña PROPIA de Maatly (jamás la de Google — Google
+         nunca la comparte; pedirlo sería phishing) y Google (habilitado).
        · El regreso de Google lo procesa ESTA página con el error VISIBLE:
          el intercambio PKCE automático del SDK fallaba en silencio (v0.56).
        · «Entrar sin cuenta» → Maatly.html?local=1 (la app funciona 100 %
@@ -59,7 +61,6 @@
             subBienvenida: 'Tu dinero y tus metas — elige cómo entrar',
             cargando: 'Preparando el ingreso…',
             procesando: 'Completando el ingreso con Google…',
-            titFuera: '¿Cómo quieres entrar?',
             entrarGoogle: 'Continuar con Google',
             entrarLocal: 'Entrar sin cuenta',
             localNota: 'La app funciona completa sin cuenta: tus datos se quedan en este navegador.',
@@ -71,13 +72,39 @@
             reintentar: 'Intentar de nuevo',
             fileNota: 'Iniciar sesión con Google solo funciona en el sitio publicado (por su dirección web), no desde un archivo local.',
             pie: 'Portal de entrada de Maatly · la app también funciona sin cuenta',
-            errOAuth: 'No se pudo iniciar el acceso con Google.'
+            errOAuth: 'No se pudo iniciar el acceso con Google.',
+            phEmail: 'Correo electrónico',
+            phContra: 'Contraseña de Maatly',
+            phContraRep: 'Repetir contraseña',
+            phContraNueva: 'Contraseña nueva (8+)',
+            btnEntrar: 'Entrar',
+            btnCrear: 'Crear cuenta',
+            btnGuardar: 'Guardar contraseña',
+            btnEnviarEnlace: 'Enviar enlace de recuperación',
+            btnAnadir: 'Añadir contraseña',
+            btnVolver: 'Volver',
+            crearCuenta: '¿Crear cuenta?',
+            olvideContra: '¿Olvidaste tu contraseña?',
+            o: 'o',
+            revisaTit: 'Revisa tu correo',
+            revisaTxt: 'Te enviamos un enlace para crear una contraseña nueva (mira también el spam). No revelamos si el correo está registrado o no.',
+            titNueva: 'Crea tu contraseña nueva',
+            anadirNota: 'Tu cuenta entró con Google: añádele una contraseña de Maatly y entra como quieras.',
+            contraGuardada: 'Contraseña guardada: desde ahora también puedes entrar con email y contraseña.',
+            errEmail: 'Escribe un correo válido.',
+            errMin8: 'La contraseña necesita al menos 8 caracteres.',
+            errDistintas: 'Las contraseñas no coinciden.',
+            errInvalidas: 'Correo o contraseña incorrectos.',
+            errYaRegistrado: 'Ese correo ya tiene cuenta: entra con tu contraseña o con Google.',
+            errNoConfirmado: 'Este correo aún no está confirmado. Entra con Google o usa la recuperación.',
+            errLimite: 'Demasiados intentos. Espera un momento y vuelve a probar.',
+            errEnlaceVencido: 'Ese enlace ya expiró o ya se usó: pide otro.',
+            errDesconocido: 'Algo falló. Inténtalo de nuevo.'
         },
         en: {
             subBienvenida: 'Your money and your goals — choose how to enter',
             cargando: 'Preparing sign-in…',
             procesando: 'Completing your Google sign-in…',
-            titFuera: 'How do you want to enter?',
             entrarGoogle: 'Continue with Google',
             entrarLocal: 'Enter without an account',
             localNota: 'The app works fully without an account: your data stays in this browser.',
@@ -89,13 +116,41 @@
             reintentar: 'Try again',
             fileNota: 'Signing in with Google only works on the published site (its web address), not from a local file.',
             pie: 'Maatly entry portal · the app also works without an account',
-            errOAuth: 'Could not start Google sign-in.'
+            errOAuth: 'Could not start Google sign-in.',
+            phEmail: 'Email address',
+            phContra: 'Maatly password',
+            phContraRep: 'Repeat password',
+            phContraNueva: 'New password (8+)',
+            btnEntrar: 'Sign in',
+            btnCrear: 'Create account',
+            btnGuardar: 'Save password',
+            btnEnviarEnlace: 'Send recovery link',
+            btnAnadir: 'Add password',
+            btnVolver: 'Back',
+            crearCuenta: 'Create an account?',
+            olvideContra: 'Forgot your password?',
+            o: 'or',
+            revisaTit: 'Check your email',
+            revisaTxt: 'We sent you a link to create a new password (check spam too). We do not reveal whether the email is registered or not.',
+            titNueva: 'Create your new password',
+            anadirNota: 'Your account signed in with Google: add a Maatly password and sign in either way.',
+            contraGuardada: 'Password saved: from now on you can also sign in with email and password.',
+            errEmail: 'Enter a valid email address.',
+            errMin8: 'The password needs at least 8 characters.',
+            errDistintas: 'The passwords do not match.',
+            errInvalidas: 'Wrong email or password.',
+            errYaRegistrado: 'That email already has an account: sign in with your password or with Google.',
+            errNoConfirmado: 'This email is not confirmed yet. Sign in with Google or use recovery.',
+            errLimite: 'Too many attempts. Wait a moment and try again.',
+            errEnlaceVencido: 'That link expired or was already used: request a new one.',
+            errDesconocido: 'Something failed. Try again.'
         }
     };
 
     let pCliente = null;   /* cliente supabase-js del portal */
     let pSesion = null;    /* sesión viva (o null) */
     let pRol = '';         /* rol del perfil ('admin' → tarjeta del panel) */
+    let pAviso = '';       /* aviso efímero renderizado al inicio del estado «dentro» */
     let pBooted = false;   /* guard de arranque único */
 
     /* ---------- helpers ---------- */
@@ -128,12 +183,34 @@
         try {
             const u = new URL(location.href);
             let cambio = false;
-            ['code', 'state', 'error', 'error_description', 'error_code', 'error_uri'].forEach(function (k) {
+            ['code', 'state', 'error', 'error_description', 'error_code', 'error_uri', 'token_hash', 'type'].forEach(function (k) {
                 if (u.searchParams.has(k)) { u.searchParams.delete(k); cambio = true; }
             });
             if (cambio) history.replaceState(null, '', u.pathname + (u.searchParams.toString() ? '?' + u.searchParams.toString() : '') + u.hash);
         } catch (e) { console.warn('[Portal] limpieza de URL:', e && e.message); }
     }
+    /* v0.57.1 · email+contraseña — helpers de formularios (errores inline, sin perder lo tecleado) */
+    const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    function pErrCaja(id, msg) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (msg) { el.textContent = msg; el.classList.remove('hidden'); }
+        else { el.classList.add('hidden'); }
+    }
+    /* mapea los errores típicos del SDK a frases del dict; lo desconocido pasa tal cual */
+    function pMapearAuth(e, tipo) {
+        const m = String((e && (e.message || e.msg)) || e || '');
+        const c = String((e && (e.code || e.status)) || '');
+        if (/rate/i.test(m) || /429/.test(c) || /over_request/i.test(c)) return pt('errLimite');
+        if (tipo === 'entrar') {
+            if (/invalid_credentials|Invalid login|user_not_found/i.test(m) || c === 'invalid_credentials') return pt('errInvalidas');
+            if (/email_not_confirmed/i.test(m) || c === 'email_not_confirmed') return pt('errNoConfirmado');
+        }
+        if (tipo === 'alta' && /already|registered|exists/i.test(m + ' ' + c)) return pt('errYaRegistrado');
+        if (tipo === 'verif' && /expired|invalid|already/i.test(m)) return pt('errEnlaceVencido');
+        return m || pt('errDesconocido');
+    }
+    function pInputCls() { return 'w-full px-4 py-3 rounded-xl bg-slate-800/70 border border-slate-700 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors'; }
     function pCargarSdk() {
         return new Promise(function (cumple, falla) {
             const ya = document.getElementById('sdkSupabase');
@@ -163,16 +240,32 @@
             html += '<div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3"><p class="text-xs text-amber-300">' + pEsc(pt('fileNota')) + '</p></div>';
             html += '<button id="btnPortalLocal" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors">' + pEsc(pt('abrirApp')) + '</button>';
         } else {
-            html += '<p class="text-sm font-bold text-slate-200">' + pEsc(pt('titFuera')) + '</p>';
+            /* v0.57.1: formulario email+contraseña ARRIBA, Google DEBAJO — ambas vías a la misma cuenta */
+            html += '<form id="pFormEntrar" class="space-y-3" novalidate>';
+            html += '  <input id="pEmail" type="email" autocomplete="email" placeholder="' + pEsc(pt('phEmail')) + '" class="' + pInputCls() + '">';
+            html += '  <input id="pPass" type="password" autocomplete="current-password" placeholder="' + pEsc(pt('phContra')) + '" class="' + pInputCls() + '">';
+            html += '  <p id="pErrEntrar" class="hidden text-xs text-rose-300"></p>';
+            html += '  <button type="submit" id="btnPortalEmail" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors">' + pEsc(pt('btnEntrar')) + '</button>';
+            html += '  <div class="flex items-center justify-between text-[11px]">';
+            html += '    <button type="button" id="pLinkCrear" class="text-indigo-300 hover:text-indigo-200 font-bold transition-colors">' + pEsc(pt('crearCuenta')) + '</button>';
+            html += '    <button type="button" id="pLinkOlvide" class="text-slate-400 hover:text-slate-200 font-bold transition-colors">' + pEsc(pt('olvideContra')) + '</button>';
+            html += '  </div>';
+            html += '</form>';
+            html += '<div class="flex items-center gap-3 text-[11px] text-slate-500"><span class="flex-1 h-px bg-slate-800"></span><span>' + pEsc(pt('o')) + '</span><span class="flex-1 h-px bg-slate-800"></span></div>';
             html += '<button id="btnPortalGoogle" class="w-full py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-sm transition-colors flex items-center justify-center gap-3">';
             html += '  <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"></path><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"></path><path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"></path><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z"></path></svg>';
             html += '  <span>' + pEsc(pt('entrarGoogle')) + '</span>';
             html += '</button>';
-            html += '<div class="flex items-center gap-3 text-[11px] text-slate-500"><span class="flex-1 h-px bg-slate-800"></span><span>o</span><span class="flex-1 h-px bg-slate-800"></span></div>';
             html += '<button id="btnPortalLocal" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-sm transition-colors">' + pEsc(pt('entrarLocal')) + '</button>';
             html += '<p class="text-[11px] text-slate-500 text-center">' + pEsc(pt('localNota')) + '</p>';
         }
         pCajaSet(html);
+        const fe = document.getElementById('pFormEntrar');
+        if (fe) fe.addEventListener('submit', function (ev) { ev.preventDefault(); pEntrarEmail(); });
+        const lc = document.getElementById('pLinkCrear');
+        if (lc) lc.addEventListener('click', pCrearVista);
+        const lo = document.getElementById('pLinkOlvide');
+        if (lo) lo.addEventListener('click', pOlvideVista);
         const bg = document.getElementById('btnPortalGoogle');
         if (bg) bg.addEventListener('click', pGoogle);
         const bl = document.getElementById('btnPortalLocal');
@@ -213,6 +306,177 @@
         if (bl2) bl2.addEventListener('click', function () { location.href = 'Maatly.html?local=1'; });
     }
 
+    /* ---------- v0.57.1 · email + contraseña (la misma cuenta que Google) ---------- */
+    async function pEntrarEmail() {
+        const email = (document.getElementById('pEmail') || {}).value || '';
+        const pass = (document.getElementById('pPass') || {}).value || '';
+        pErrCaja('pErrEntrar', '');
+        if (!EMAIL_OK.test(email.trim())) { pErrCaja('pErrEntrar', pt('errEmail')); return; }
+        if (pass.length < 8) { pErrCaja('pErrEntrar', pt('errMin8')); return; }
+        const b = document.getElementById('btnPortalEmail');
+        if (b) { b.disabled = true; b.textContent = '…'; }
+        let motivo = '';
+        try {
+            const r = await pCliente.auth.signInWithPassword({ email: email.trim(), password: pass });
+            if (r && r.error) motivo = pMapearAuth(r.error, 'entrar');
+            else if (r && r.data && r.data.session) pSesion = r.data.session;
+            else motivo = pt('errDesconocido');
+        } catch (e) { motivo = pMapearAuth(e, 'entrar'); }
+        if (b) { b.disabled = false; b.textContent = pt('btnEntrar'); }
+        if (motivo) { pErrCaja('pErrEntrar', motivo); return; }
+        await pDentro();
+    }
+
+    function pCrearVista() {
+        document.getElementById('pSub').textContent = pt('subBienvenida');
+        let html = '';
+        html += '<form id="pFormCrear" class="space-y-3" novalidate>';
+        html += '  <p class="text-sm font-bold text-slate-200">' + pEsc(pt('btnCrear')) + '</p>';
+        html += '  <input id="pEmail" type="email" autocomplete="email" placeholder="' + pEsc(pt('phEmail')) + '" class="' + pInputCls() + '">';
+        html += '  <input id="pPass" type="password" autocomplete="new-password" placeholder="' + pEsc(pt('phContra')) + '" class="' + pInputCls() + '">';
+        html += '  <input id="pPass2" type="password" autocomplete="new-password" placeholder="' + pEsc(pt('phContraRep')) + '" class="' + pInputCls() + '">';
+        html += '  <p id="pErrCrear" class="hidden text-xs text-rose-300"></p>';
+        html += '  <button type="submit" id="btnPortalCrear" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors">' + pEsc(pt('btnCrear')) + '</button>';
+        html += '</form>';
+        html += '<button id="btnPortalVolver" class="w-full py-2 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-bold transition-colors">' + pEsc(pt('btnVolver')) + '</button>';
+        pCajaSet(html);
+        const fc = document.getElementById('pFormCrear');
+        if (fc) fc.addEventListener('submit', function (ev) { ev.preventDefault(); pCrearEmail(); });
+        const bv = document.getElementById('btnPortalVolver');
+        if (bv) bv.addEventListener('click', function () { pFuera(); });
+    }
+
+    async function pCrearEmail() {
+        const email = (document.getElementById('pEmail') || {}).value || '';
+        const pass = (document.getElementById('pPass') || {}).value || '';
+        const pass2 = (document.getElementById('pPass2') || {}).value || '';
+        pErrCaja('pErrCrear', '');
+        if (!EMAIL_OK.test(email.trim())) { pErrCaja('pErrCrear', pt('errEmail')); return; }
+        if (pass.length < 8) { pErrCaja('pErrCrear', pt('errMin8')); return; }
+        if (pass !== pass2) { pErrCaja('pErrCrear', pt('errDistintas')); return; }
+        const b = document.getElementById('btnPortalCrear');
+        if (b) { b.disabled = true; b.textContent = '…'; }
+        let motivo = '';
+        try {
+            const r = await pCliente.auth.signUp({ email: email.trim(), password: pass });
+            if (r && r.error) motivo = pMapearAuth(r.error, 'alta');
+            else if (r && r.data && r.data.session) pSesion = r.data.session;
+            else if (r && r.data && r.data.user) { pRevisaVista(); return; }   /* defensa: si algún día se reactiva la confirmación */
+            else motivo = pt('errDesconocido');
+        } catch (e) { motivo = pMapearAuth(e, 'alta'); }
+        if (b) { b.disabled = false; b.textContent = pt('btnCrear'); }
+        if (motivo) { pErrCaja('pErrCrear', motivo); return; }
+        await pDentro();
+    }
+
+    function pOlvideVista() {
+        document.getElementById('pSub').textContent = pt('subBienvenida');
+        let html = '';
+        html += '<form id="pFormOlvide" class="space-y-3" novalidate>';
+        html += '  <p class="text-sm font-bold text-slate-200">' + pEsc(pt('olvideContra')) + '</p>';
+        html += '  <input id="pEmail" type="email" autocomplete="email" placeholder="' + pEsc(pt('phEmail')) + '" class="' + pInputCls() + '">';
+        html += '  <p id="pErrOlvide" class="hidden text-xs text-rose-300"></p>';
+        html += '  <button type="submit" id="btnPortalOlvide" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors">' + pEsc(pt('btnEnviarEnlace')) + '</button>';
+        html += '</form>';
+        html += '<button id="btnPortalVolver" class="w-full py-2 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-bold transition-colors">' + pEsc(pt('btnVolver')) + '</button>';
+        pCajaSet(html);
+        const fo = document.getElementById('pFormOlvide');
+        if (fo) fo.addEventListener('submit', function (ev) { ev.preventDefault(); pOlvideEnviar(); });
+        const bv = document.getElementById('btnPortalVolver');
+        if (bv) bv.addEventListener('click', function () { pFuera(); });
+    }
+
+    async function pOlvideEnviar() {
+        const email = (document.getElementById('pEmail') || {}).value || '';
+        pErrCaja('pErrOlvide', '');
+        if (!EMAIL_OK.test(email.trim())) { pErrCaja('pErrOlvide', pt('errEmail')); return; }
+        const b = document.getElementById('btnPortalOlvide');
+        if (b) { b.disabled = true; b.textContent = '…'; }
+        let motivo = '';
+        try {
+            const r = await pCliente.auth.resetPasswordForEmail(email.trim(), { redirectTo: location.origin + location.pathname });
+            if (r && r.error) motivo = pMapearAuth(r.error, 'reset');
+        } catch (e) { motivo = pMapearAuth(e, 'reset'); }
+        if (b) { b.disabled = false; b.textContent = pt('btnEnviarEnlace'); }
+        if (motivo) { pErrCaja('pErrOlvide', motivo); return; }
+        pRevisaVista();
+    }
+
+    function pRevisaVista() {
+        let html = '';
+        html += '<div class="bg-sky-500/10 border border-sky-500/30 rounded-xl p-4"><p class="text-sm font-bold text-sky-300">' + pEsc(pt('revisaTit')) + '</p><p class="text-xs text-sky-200/80 mt-1">' + pEsc(pt('revisaTxt')) + '</p></div>';
+        html += '<button id="btnPortalVolver" class="w-full py-2 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-bold transition-colors">' + pEsc(pt('btnVolver')) + '</button>';
+        pCajaSet(html);
+        const bv = document.getElementById('btnPortalVolver');
+        if (bv) bv.addEventListener('click', function () { pFuera(); });
+    }
+
+    /* el enlace de recuperación aterriza aquí con ?token_hash=…&type=recovery */
+    function pNuevaVista(tokenHash) {
+        document.getElementById('pSub').textContent = pt('subBienvenida');
+        let html = '';
+        html += '<form id="pFormNueva" class="space-y-3" novalidate>';
+        html += '  <p class="text-sm font-bold text-slate-200">' + pEsc(pt('titNueva')) + '</p>';
+        html += '  <input id="pNewPass" type="password" autocomplete="new-password" placeholder="' + pEsc(pt('phContraNueva')) + '" class="' + pInputCls() + '">';
+        html += '  <input id="pNewPass2" type="password" autocomplete="new-password" placeholder="' + pEsc(pt('phContraRep')) + '" class="' + pInputCls() + '">';
+        html += '  <p id="pErrNueva" class="hidden text-xs text-rose-300"></p>';
+        html += '  <button type="submit" id="btnPortalNueva" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors">' + pEsc(pt('btnGuardar')) + '</button>';
+        html += '</form>';
+        html += '<button id="btnPortalOlvide2" class="w-full py-2 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-bold transition-colors">' + pEsc(pt('olvideContra')) + '</button>';
+        pCajaSet(html);
+        const fn = document.getElementById('pFormNueva');
+        if (fn) fn.addEventListener('submit', function (ev) { ev.preventDefault(); pNuevaGuardar(tokenHash); });
+        const bo = document.getElementById('btnPortalOlvide2');
+        if (bo) bo.addEventListener('click', pOlvideVista);
+    }
+
+    async function pNuevaGuardar(tokenHash) {
+        const n1 = (document.getElementById('pNewPass') || {}).value || '';
+        const n2 = (document.getElementById('pNewPass2') || {}).value || '';
+        pErrCaja('pErrNueva', '');
+        if (n1.length < 8) { pErrCaja('pErrNueva', pt('errMin8')); return; }
+        if (n1 !== n2) { pErrCaja('pErrNueva', pt('errDistintas')); return; }
+        const b = document.getElementById('btnPortalNueva');
+        if (b) { b.disabled = true; b.textContent = '…'; }
+        let motivo = '';
+        try {
+            const rv = await pCliente.auth.verifyOtp({ type: 'recovery', token_hash: tokenHash });
+            if (rv && rv.error) motivo = pMapearAuth(rv.error, 'verif');
+            else if (rv && rv.data && rv.data.session) pSesion = rv.data.session;
+            else motivo = pt('errDesconocido');
+            if (!motivo) {
+                const ru = await pCliente.auth.updateUser({ password: n1 });
+                if (ru && ru.error) motivo = pMapearAuth(ru.error, 'update');
+                else if (ru && ru.data && ru.data.user && pSesion) pSesion.user = ru.data.user;
+            }
+        } catch (e) { motivo = pMapearAuth(e, 'verif'); }
+        if (b) { b.disabled = false; b.textContent = pt('btnGuardar'); }
+        if (motivo) { pErrCaja('pErrNueva', motivo); return; }
+        pUrlLimpiar();
+        pAviso = pt('contraGuardada');
+        await pDentro();
+    }
+
+    async function pAnadirGuardar() {
+        const n1 = (document.getElementById('pNewPass') || {}).value || '';
+        const n2 = (document.getElementById('pNewPass2') || {}).value || '';
+        pErrCaja('pErrAnadir', '');
+        if (n1.length < 8) { pErrCaja('pErrAnadir', pt('errMin8')); return; }
+        if (n1 !== n2) { pErrCaja('pErrAnadir', pt('errDistintas')); return; }
+        const b = document.getElementById('btnPortalAnadirGuardar');
+        if (b) { b.disabled = true; b.textContent = '…'; }
+        let motivo = '';
+        try {
+            const ru = await pCliente.auth.updateUser({ password: n1 });
+            if (ru && ru.error) motivo = pMapearAuth(ru.error, 'update');
+            else if (ru && ru.data && ru.data.user && pSesion) pSesion.user = ru.data.user;
+        } catch (e) { motivo = pMapearAuth(e, 'update'); }
+        if (b) { b.disabled = false; b.textContent = pt('btnGuardar'); }
+        if (motivo) { pErrCaja('pErrAnadir', motivo); return; }
+        pAviso = pt('contraGuardada');
+        await pDentro();
+    }
+
     async function pDentro() {
         const user = (pSesion && pSesion.user) ? pSesion.user : null;
         if (!user) { pFuera(); return; }
@@ -229,6 +493,10 @@
         pRol = rol;
         document.getElementById('pSub').textContent = pt('yaDentro');
         let html = '';
+        if (pAviso) {
+            html += '<div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3"><p class="text-xs text-emerald-300">' + pEsc(pAviso) + '</p></div>';
+            pAviso = '';
+        }
         html += '<div class="flex items-center gap-3 mb-1">';
         html += '  <span class="w-10 h-10 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center flex-shrink-0">' + pEsc((nombre || '?').charAt(0).toUpperCase()) + '</span>';
         html += '  <div class="min-w-0"><p class="font-bold text-sm text-white truncate">' + pEsc(nombre) + '</p><p class="text-xs text-slate-400 truncate">' + pEsc(email) + '</p></div>';
@@ -238,6 +506,20 @@
             html += '<button id="btnPortalAdmin" class="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm transition-colors">' + pEsc(pt('abrirAdmin')) + '</button>';
         }
         html += '<button id="btnPortalSalir" class="w-full py-2 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-bold transition-colors">' + pEsc(pt('salir')) + '</button>';
+        /* v0.57.1: sincronización — la cuenta solo-Google puede añadir una contraseña de Maatly */
+        const esSoloGoogle = !((user.identities) || []).some(function (i) { return i && i.provider === 'email'; });
+        if (esSoloGoogle) {
+            html += '<div class="bg-slate-800/60 border border-slate-700 rounded-xl p-4 space-y-2">';
+            html += '  <p class="text-[11px] text-slate-300">' + pEsc(pt('anadirNota')) + '</p>';
+            html += '  <button id="btnPortalAnadir" class="w-full py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-100 text-xs font-bold transition-colors">' + pEsc(pt('btnAnadir')) + '</button>';
+            html += '  <div id="pAnadirZona" class="hidden space-y-2">';
+            html += '    <input id="pNewPass" type="password" autocomplete="new-password" placeholder="' + pEsc(pt('phContraNueva')) + '" class="' + pInputCls() + '">';
+            html += '    <input id="pNewPass2" type="password" autocomplete="new-password" placeholder="' + pEsc(pt('phContraRep')) + '" class="' + pInputCls() + '">';
+            html += '    <p id="pErrAnadir" class="hidden text-xs text-rose-300"></p>';
+            html += '    <button id="btnPortalAnadirGuardar" class="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-colors">' + pEsc(pt('btnGuardar')) + '</button>';
+            html += '  </div>';
+            html += '</div>';
+        }
         pCajaSet(html);
         const ba = document.getElementById('btnPortalApp');
         if (ba) ba.addEventListener('click', function () { location.href = pVolver(); });
@@ -245,6 +527,10 @@
         if (bd) bd.addEventListener('click', function () { location.href = 'admin.html'; });
         const bs = document.getElementById('btnPortalSalir');
         if (bs) bs.addEventListener('click', pSalir);
+        const bn = document.getElementById('btnPortalAnadir');
+        if (bn) bn.addEventListener('click', function () { const z = document.getElementById('pAnadirZona'); if (z) z.classList.toggle('hidden'); });
+        const bu = document.getElementById('btnPortalAnadirGuardar');
+        if (bu) bu.addEventListener('click', pAnadirGuardar);
         /* destino pedido por la puerta o por la app: saltar tras un latido (solo si se pidió) */
         const dest = pDestinoPedir();
         if (dest) setTimeout(function () { location.href = dest; }, 700);
@@ -253,6 +539,7 @@
     async function pSalir() {
         try { if (pCliente) await pCliente.auth.signOut(); } catch (e) { console.warn('[Portal] salir:', e && e.message); }
         pSesion = null; pRol = '';
+        pAviso = '';
         try { sessionStorage.removeItem('maatlyVolver'); } catch (e2) {}
         pFuera();
     }
@@ -294,6 +581,10 @@
             await pCargarSdk();
             if (!window.supabase || typeof window.supabase.createClient !== 'function') throw new Error('SDK sin createClient');
             pCliente = window.supabase.createClient(PORTAL_CFG.url, PORTAL_CFG.key, { auth: { detectSessionInUrl: false } });
+            /* v0.57.1: enlace de recuperación (?token_hash=…&type=recovery) → formulario de contraseña nueva */
+            const q = new URLSearchParams(location.search);
+            const tokenHash = q.get('token_hash');
+            if (tokenHash && q.get('type') === 'recovery') { pNuevaVista(tokenHash); return; }
             const huboRegreso = await pRegreso();
             if (!huboRegreso) {
                 const r = await pCliente.auth.getSession();
