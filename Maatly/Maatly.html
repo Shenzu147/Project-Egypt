@@ -2179,7 +2179,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.56';
+        const VER_APP = 'v0.57';
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -4461,7 +4461,9 @@
                 'su.sinCfgD2': 'Cuando la configuración esté lista, aquí verás el botón para entrar con Google.',
                 'su.noSdk': 'No se pudo cargar el módulo de conexión. Revisa tu conexión a internet y vuelve a abrir esta sección.',
                 'su.fileNota': 'Entrar con tu cuenta desde un archivo local no es posible: Google exige un sitio publicado. Usa la app desde su página web para iniciar sesión.',
-                'su.entrar': 'Continuar con Google',
+                'su.entrarPortal': 'Iniciar sesión',
+                'su.errRegreso': 'El ingreso con Google no se completó: {m}. Cierra otras pestañas del sitio e inténtalo una sola vez.',
+                'su.bloqueado': 'Tu cuenta está bloqueada. Habla con el administrador de Maatly.',
                 'su.salir': 'Cerrar sesión',
                 'su.opcional': 'Opcional: puedes usar Maatly para siempre sin cuenta.',
                 'su.errSignIn': 'No se pudo iniciar el acceso con Google. Inténtalo de nuevo.',
@@ -5446,7 +5448,9 @@
                 'su.sinCfgD2': 'Once the setup is ready, you will see the Google sign-in button here.',
                 'su.noSdk': 'The connection module could not be loaded. Check your internet connection and reopen this section.',
                 'su.fileNota': 'Signing in from a local file is not possible: Google requires a published site. Use the app from its web page to sign in.',
-                'su.entrar': 'Continue with Google',
+                'su.entrarPortal': 'Sign in',
+                'su.errRegreso': 'Google sign-in did not complete: {m}. Close other tabs of the site and try a single attempt.',
+                'su.bloqueado': 'Your account is blocked. Contact the Maatly administrator.',
                 'su.salir': 'Sign out',
                 'su.opcional': 'Optional: you can use Maatly forever without an account.',
                 'su.errSignIn': 'Could not start Google sign-in. Please try again.',
@@ -13358,12 +13362,80 @@
             if (pin && pin.autoLock > 0 && !agEstaBloqueado() && Date.now() - agUltimaActividad > pin.autoLock * 60000) agBloquear();
         }
 
-        /* ---------- v0.56 · Supabase I2a «Cuentas» — login OPCIONAL ---------- */
+        /* ---------- v0.57 · Supabase «Cuentas» — login normalizado vía portal ---------- */
         /* La nube NO toca tus datos: solo la identidad. Con SUPA_CFG vacía la app es 100 % local
-           y no se descarga ningún SDK. La sesión la maneja supabase-js (localStorage sb-…). */
+           y no se descarga ningún SDK. La sesión la maneja supabase-js (localStorage sb-…).
+           v0.57: el ingreso vive en el PORTAL (entrar.html — mismo origen, misma sesión guardada) y
+           la app procesa el regreso de Google con el motivo VISIBLE: el intercambio PKCE automático
+           de supabase-js fallaba en silencio (sin sesión y sin mensaje). */
         let supaCliente = null;      /* cliente supabase-js (null: sin config o SDK no cargó) */
         let supaSesion = null;       /* sesión viva de auth (o null) */
+        let supaUltimoError = '';    /* v0.57: motivo del último regreso fallido (toast + caja del panel) */
+        let supaPerfilUltimo = '';   /* v0.57: dedup del upsert de perfil (INITIAL_SESSION + SIGNED_IN) */
+        let supaPerfilUltimoT = 0;
         function supaConfigurada() { return typeof SUPA_CFG === 'object' && !!SUPA_CFG.url && !!SUPA_CFG.key; }
+
+        /* v0.57 · Puerta del portal: si el sitio está publicado (https), la nube está configurada y
+           este navegador no tiene sesión guardada aquí, el arranque manda al portal de entrada.
+           Escapes: ?local=1 (salida local, vale para la pestaña vía sessionStorage) · regreso de
+           Google (?code= / ?error=) · token sb-…-auth-token presente. En file:// NUNCA hay puerta. */
+        function supaPuertaHabitat() { return location.protocol === 'https:'; }   /* solo el sitio publicado */
+        function supaPuertaDeber() {
+            try {
+                if (!supaConfigurada()) return false;
+                if (/[?&](code|error)=/.test(location.search)) return false;   /* regreso: la app lo procesa */
+                const p = new URLSearchParams(location.search);
+                if (p.get('local') === '1') { try { sessionStorage.setItem('maatlyPortalSalto', '1'); } catch (e2) {} return false; }
+                if (!supaPuertaHabitat()) return false;   /* file:// y http nunca tienen puerta */
+                try { if (sessionStorage.getItem('maatlyPortalSalto') === '1') return false; } catch (e2) {}
+                const ref = String(SUPA_CFG.url || '').replace(/^https:\/\//, '').split('.')[0];
+                if (ref && localStorage.getItem('sb-' + ref + '-auth-token')) return false;
+                return true;
+            } catch (e) { console.warn('[Supa] puerta:', e && e.message); return false; }
+        }
+        function supaPuertaIr() {
+            try {
+                try { document.body.style.visibility = 'hidden'; } catch (e2) {}   /* sin destello del shell */
+                setTimeout(function () { try { document.body.style.visibility = ''; } catch (e3) {} }, 2500);
+                location.replace('entrar.html?volver=' + encodeURIComponent('Maatly.html'));
+            } catch (e) { console.warn('[Supa] puerta redirect:', e && e.message); }
+        }
+        /* v0.57: limpia code/state/error de la barra tras procesar el regreso (la app no usa query params) */
+        function supaUrlLimpiar() {
+            try {
+                const u = new URL(location.href);
+                let cambio = false;
+                ['code', 'state', 'error', 'error_description', 'error_code', 'error_uri'].forEach(function (k) {
+                    if (u.searchParams.has(k)) { u.searchParams.delete(k); cambio = true; }
+                });
+                if (cambio) history.replaceState(null, '', u.pathname + (u.searchParams.toString() ? '?' + u.searchParams.toString() : '') + u.hash);
+            } catch (e) { console.warn('[Supa] limpieza de URL:', e && e.message); }
+        }
+        /* v0.57: regreso de Google bajo control de la app — procesa ?code= (PKCE) y ?error= y deja el
+           resultado VISIBLE: éxito → sesión normal; fallo → toast + caja persistente con el motivo. */
+        async function supaRegresoProcesar() {
+            if (!supaCliente) return;
+            const p = new URLSearchParams(location.search);
+            const codigo = p.get('code');
+            const errTitulo = p.get('error');
+            if (!codigo && !errTitulo) return;
+            let motivo = '';
+            if (codigo) {
+                try {
+                    const r = await supaCliente.auth.exchangeCodeForSession(codigo);
+                    if (r && r.error) motivo = (r.error.message || String(r.error));
+                } catch (e) { motivo = (e && e.message) || String(e); }
+            }
+            if (!motivo && errTitulo) motivo = (p.get('error_description') || p.get('error_code') || errTitulo);
+            supaUrlLimpiar();
+            if (motivo) {
+                supaUltimoError = motivo;
+                console.warn('[Supa] regreso de Google falló:', motivo);
+                try { mostrarToast(tiPlantilla('su.errRegreso', { m: motivo }), 'error'); } catch (e2) { console.warn('[Supa] toast regreso:', e2 && e2.message); }
+            } else {
+                supaUltimoError = '';
+            }
+        }
         function supaCargarSdk() {
             return new Promise(function (cumple, falla) {
                 const ya = document.getElementById('sdkSupabase');
@@ -13388,15 +13460,19 @@
             try {
                 await supaCargarSdk();
                 if (!window.supabase || typeof window.supabase.createClient !== 'function') throw new Error('SDK sin createClient');
-                supaCliente = window.supabase.createClient(SUPA_CFG.url, SUPA_CFG.key);
-                const r = await supaCliente.auth.getSession();
-                supaSesion = (r && r.data && r.data.session) ? r.data.session : null;
-                if (supaSesion && supaSesion.user) supaPerfilAsegurar(supaSesion.user);
+                /* v0.57: detectSessionInUrl en false — el regreso lo procesa supaRegresoProcesar (visible).
+                   El listener va ANTES del getSession para no perder ningún evento. */
+                supaCliente = window.supabase.createClient(SUPA_CFG.url, SUPA_CFG.key, { auth: { detectSessionInUrl: false } });
                 supaCliente.auth.onAuthStateChange(function (evento, sesion) {
                     supaSesion = sesion || null;
+                    if (evento === 'SIGNED_IN') supaUltimoError = '';
                     if (supaSesion && supaSesion.user && (evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION')) supaPerfilAsegurar(supaSesion.user);
                     supaRenderPanel();
                 });
+                await supaRegresoProcesar();   /* ?code= / ?error= — motivo visible si el intercambio falla */
+                const r = await supaCliente.auth.getSession();
+                supaSesion = (r && r.data && r.data.session) ? r.data.session : null;
+                if (supaSesion && supaSesion.user) supaPerfilAsegurar(supaSesion.user);
             } catch (e) {
                 console.warn('[Supa] init falló:', e && e.message);
                 supaCliente = null;
@@ -13405,9 +13481,23 @@
         }
         async function supaPerfilAsegurar(user) {
             if (!supaCliente || !user || !user.id) return;
+            /* v0.57: dedup — al arrancar INITIAL_SESSION y SIGNED_IN pueden llegar juntos */
+            if (supaPerfilUltimo === user.id && Date.now() - supaPerfilUltimoT < 4000) return;
+            supaPerfilUltimo = user.id; supaPerfilUltimoT = Date.now();
             try {
+                /* v0.57: ¿cuenta bloqueada? — un admin la bloquea desde el panel; la app lo hace efectivo aquí.
+                   Si las columnas nuevas (rol/email/estado) aún no existen, el error se registra y se sigue. */
+                const rb = await supaCliente.from('profiles').select('estado').eq('id', user.id).maybeSingle();
+                if (rb && rb.error) console.warn('[Supa] estado del perfil:', rb.error.message);
+                if (rb && rb.data && rb.data.estado === 'bloqueado') {
+                    try { await supaCliente.auth.signOut(); } catch (e2) {}
+                    supaSesion = null;
+                    supaRenderPanel();
+                    mostrarToast(ti('su.bloqueado'), 'error');
+                    return;
+                }
                 const nombre = ((perfilGet().nombre || (user.email ? String(user.email).split('@')[0] : '')).trim()) || 'Maatly';
-                const r = await supaCliente.from('profiles').upsert({ id: user.id, nombre: nombre, idioma: idiomaApp() });
+                const r = await supaCliente.from('profiles').upsert({ id: user.id, nombre: nombre, idioma: idiomaApp(), email: user.email || '' });
                 if (r && r.error) console.warn('[Supa] perfil:', r.error.message);
             } catch (e) {
                 console.warn('[Supa] perfil no se pudo guardar:', e && e.message);
@@ -13417,12 +13507,12 @@
             triggerHaptic();
             if (!supaConfigurada()) { mostrarToast(ti('su.sinCfg'), 'error'); return; }
             if (location.protocol === 'file:') { mostrarToast(ti('su.soloHosted'), 'error'); return; }
-            if (!supaCliente) { mostrarToast(ti('su.noSdk'), 'error'); return; }
+            /* v0.57: el ingreso vive en el portal de entrada — un solo camino de login para la app
+               y el admin. El portal carga su propio SDK; la app ya no necesita el suyo para entrar. */
             try {
-                const r = await supaCliente.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('#')[0] } });
-                if (r && r.error) throw new Error(r.error.message);
+                location.href = 'entrar.html?volver=' + encodeURIComponent('Maatly.html');
             } catch (e) {
-                console.warn('[Supa] sign-in falló:', e && e.message);
+                console.warn('[Supa] ir al portal falló:', e && e.message);
                 mostrarToast(ti('su.errSignIn'), 'error');
             }
         }
@@ -13471,14 +13561,20 @@
                 html += '  <button id="btnSupaSalir" class="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-bold rounded-lg text-xs transition-colors flex-shrink-0">' + ti('su.salir') + '</button>';
                 html += '</div>';
             }
-            /* Sin sesión: botón de Google (solo hosted — en file:// Google no puede regresar) */
+            /* Sin sesión: botón al PORTAL de entrada (el botón de Google vive ahí — v0.57) */
             if (!user && !enFile) {
                 html += '<div class="flex flex-col items-stretch sm:items-start gap-3">';
                 html += '  <button id="btnSupaEntrar" class="px-5 py-3 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center sm:justify-start gap-3 shadow-sm">';
-                html += '    <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"></path><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"></path><path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"></path><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z"></path></svg>';
-                html += '    <span>' + ti('su.entrar') + '</span>';
+                html += '    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>';
+                html += '    <span>' + ti('su.entrarPortal') + '</span>';
                 html += '  </button>';
                 html += '  <p class="text-[11px] text-slate-400 dark:text-slate-500">' + ti('su.opcional') + '</p>';
+                html += '</div>';
+            }
+            /* v0.57: motivo del último regreso fallido — persistente (el toast dura 3 s, esto queda) */
+            if (!user && supaUltimoError && supaConfigurada()) {
+                html += '<div class="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-4">';
+                html += '  <p class="text-xs text-rose-700 dark:text-rose-300 break-words">' + agEscape(tiPlantilla('su.errRegreso', { m: supaUltimoError })) + '</p>';
                 html += '</div>';
             }
             /* Sin sesión en file://: nota honesta en lugar del botón muerto */
@@ -13499,6 +13595,9 @@
         /* ---------- Estado del sidebar y arranque ---------- */
         (function agInit() {
             try { localStorage.removeItem('geminiApiKey'); } catch (e) {}
+            /* v0.57: puerta del portal — sitio publicado + nube configurada + sin sesión guardada aquí
+               → el arranque manda al portal de entrada (entrar.html) y la app no llega a inicializarse. */
+            if (supaPuertaDeber()) { supaPuertaIr(); return; }
             agInyectarLock();
             agWireAdjuntos();
             agSetModelos(agGetModelos());

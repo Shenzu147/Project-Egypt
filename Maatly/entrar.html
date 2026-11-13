@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- v0.57 · Portal de entrada de Maatly. Misma CSP que la app (el SDK sale a *.supabase.co;
+         va ANTES de cualquier recurso para gobernar todo lo que carga la página). -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net https://*.supabase.co wss://*.supabase.co; frame-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self';">
+    <meta name="theme-color" content="#090d16">
+    <title>Maatly | Entrar</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'], display: ['Manrope', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] } } } }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="icono-512.png">
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        button { touch-action: manipulation; }
+    </style>
+</head>
+<body class="min-h-screen bg-[#090d16] text-slate-100 flex flex-col items-center justify-center px-4 py-10 selection:bg-indigo-500/30">
+    <div class="w-full max-w-sm">
+        <div class="flex flex-col items-center mb-7">
+            <img src="icono-512.png" alt="Maatly" class="w-16 h-16 rounded-2xl shadow-lg shadow-indigo-950/50 mb-4" onerror="this.style.display='none'">
+            <h1 class="font-display text-2xl font-extrabold tracking-tight text-white">Maatly</h1>
+            <p id="pSub" class="text-xs text-slate-400 mt-1 text-center"></p>
+        </div>
+        <div id="pCaja" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl shadow-black/40 space-y-4">
+            <div class="flex items-center justify-center py-8 text-slate-400 text-sm">…</div>
+        </div>
+        <p id="pPie" class="text-center text-[11px] text-slate-500 mt-6"></p>
+    </div>
+    <script>
+    'use strict';
+    /* ================================================================
+       v0.57 · PORTAL DE ENTRADA de Maatly — login normalizado (Ronda A)
+       · Mismo origen que Maatly.html → comparte la sesión de supabase-js
+         (localStorage sb-<ref>-auth-token): un solo ingreso para la app,
+         el portal y el panel admin (admin.html, Ronda B).
+       · Solo Google (provider ya habilitado en Supabase).
+       · El regreso de Google lo procesa ESTA página con el error VISIBLE:
+         el intercambio PKCE automático del SDK fallaba en silencio (v0.56).
+       · «Entrar sin cuenta» → Maatly.html?local=1 (la app funciona 100 %
+         local; el ?local=1 desactiva la puerta para esa pestaña).
+       · En file:// no hay Google (exige sitio publicado): nota honesta.
+       · PORTAL_CFG va sincronizada con SUPA_CFG de Maatly.html (misma url y
+         key publishable; la service key JAMÁS va al HTML).
+       ================================================================ */
+    const VER_PORTAL = 'v0.57';
+    const PORTAL_CFG = { url: 'https://pshtfyodoxxyzpwgmpoj.supabase.co', key: 'sb_publishable_uPUVWtNJl55Ft5QwfmWmfA_0dFvcQgH' };
+
+    const I18N_PORTAL = {
+        es: {
+            subBienvenida: 'Tu dinero y tus metas — elige cómo entrar',
+            cargando: 'Preparando el ingreso…',
+            procesando: 'Completando el ingreso con Google…',
+            titFuera: '¿Cómo quieres entrar?',
+            entrarGoogle: 'Continuar con Google',
+            entrarLocal: 'Entrar sin cuenta',
+            localNota: 'La app funciona completa sin cuenta: tus datos se quedan en este navegador.',
+            yaDentro: 'Ya estás dentro',
+            abrirApp: 'Abrir Maatly',
+            abrirAdmin: 'Panel admin',
+            salir: 'Cerrar sesión',
+            errTit: 'El ingreso no se completó',
+            reintentar: 'Intentar de nuevo',
+            fileNota: 'Iniciar sesión con Google solo funciona en el sitio publicado (por su dirección web), no desde un archivo local.',
+            pie: 'Portal de entrada de Maatly · la app también funciona sin cuenta',
+            errOAuth: 'No se pudo iniciar el acceso con Google.'
+        },
+        en: {
+            subBienvenida: 'Your money and your goals — choose how to enter',
+            cargando: 'Preparing sign-in…',
+            procesando: 'Completing your Google sign-in…',
+            titFuera: 'How do you want to enter?',
+            entrarGoogle: 'Continue with Google',
+            entrarLocal: 'Enter without an account',
+            localNota: 'The app works fully without an account: your data stays in this browser.',
+            yaDentro: 'You are already signed in',
+            abrirApp: 'Open Maatly',
+            abrirAdmin: 'Admin panel',
+            salir: 'Sign out',
+            errTit: 'Sign-in did not complete',
+            reintentar: 'Try again',
+            fileNota: 'Signing in with Google only works on the published site (its web address), not from a local file.',
+            pie: 'Maatly entry portal · the app also works without an account',
+            errOAuth: 'Could not start Google sign-in.'
+        }
+    };
+
+    let pCliente = null;   /* cliente supabase-js del portal */
+    let pSesion = null;    /* sesión viva (o null) */
+    let pRol = '';         /* rol del perfil ('admin' → tarjeta del panel) */
+    let pBooted = false;   /* guard de arranque único */
+
+    /* ---------- helpers ---------- */
+    function pLeng() {
+        try { const j = JSON.parse(localStorage.getItem('maatlyPerfil') || '{}'); return (j && j.idioma === 'en') ? 'en' : 'es'; } catch (e) { return 'es'; }
+    }
+    function pt(c) {
+        const d = I18N_PORTAL[pLeng()] || I18N_PORTAL.es;
+        return d[c] || I18N_PORTAL.es[c] || c;
+    }
+    function pEsc(t) {
+        return String(t == null ? '' : t).replace(/[&<>"']/g, function (ch) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]; });
+    }
+    function pCajaSet(html) { document.getElementById('pCaja').innerHTML = html; }
+    const VUELVA_OK = /^[A-Za-z0-9._-]+\.html$/;   /* volver solo acepta páginas hermanas del mismo directorio */
+    function pVolver() {
+        const v = new URLSearchParams(location.search).get('volver') || '';
+        return VUELVA_OK.test(v) ? v : 'Maatly.html';
+    }
+    /* v0.57: destino pedido — el ?volver= NO sobrevive al ida-y-vuelta de Google (el redirectTo
+       va limpio para la lista de Redirect URLs), así que pGoogle lo guarda en sessionStorage
+       SOLO si fue pedido explícitamente; aquí se lee y se consume (sessionStorage → URL → nada). */
+    function pDestinoPedir() {
+        let v = '';
+        try { v = sessionStorage.getItem('maatlyVolver') || ''; sessionStorage.removeItem('maatlyVolver'); } catch (e) {}
+        if (!v) { v = new URLSearchParams(location.search).get('volver') || ''; }
+        return VUELVA_OK.test(v) ? v : '';
+    }
+    function pUrlLimpiar() {
+        try {
+            const u = new URL(location.href);
+            let cambio = false;
+            ['code', 'state', 'error', 'error_description', 'error_code', 'error_uri'].forEach(function (k) {
+                if (u.searchParams.has(k)) { u.searchParams.delete(k); cambio = true; }
+            });
+            if (cambio) history.replaceState(null, '', u.pathname + (u.searchParams.toString() ? '?' + u.searchParams.toString() : '') + u.hash);
+        } catch (e) { console.warn('[Portal] limpieza de URL:', e && e.message); }
+    }
+    function pCargarSdk() {
+        return new Promise(function (cumple, falla) {
+            const ya = document.getElementById('sdkSupabase');
+            if (ya) {
+                if (ya.dataset.cargado === '1') { cumple(); return; }
+                ya.addEventListener('load', function () { cumple(); });
+                ya.addEventListener('error', function () { falla(new Error('SDK de carga previa falló')); });
+                return;
+            }
+            const s = document.createElement('script');
+            s.id = 'sdkSupabase';
+            s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js';
+            s.integrity = 'sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O';
+            s.crossOrigin = 'anonymous';
+            s.onload = function () { try { s.dataset.cargado = '1'; } catch (e) {} cumple(); };
+            s.onerror = function () { falla(new Error('No se pudo descargar el SDK de Supabase')); };
+            document.head.appendChild(s);
+        });
+    }
+
+    /* ---------- estados ---------- */
+    function pFuera() {
+        document.getElementById('pSub').textContent = pt('subBienvenida');
+        const enFile = (location.protocol === 'file:');
+        let html = '';
+        if (enFile) {
+            html += '<div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3"><p class="text-xs text-amber-300">' + pEsc(pt('fileNota')) + '</p></div>';
+            html += '<button id="btnPortalLocal" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors">' + pEsc(pt('abrirApp')) + '</button>';
+        } else {
+            html += '<p class="text-sm font-bold text-slate-200">' + pEsc(pt('titFuera')) + '</p>';
+            html += '<button id="btnPortalGoogle" class="w-full py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-sm transition-colors flex items-center justify-center gap-3">';
+            html += '  <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"></path><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"></path><path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"></path><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z"></path></svg>';
+            html += '  <span>' + pEsc(pt('entrarGoogle')) + '</span>';
+            html += '</button>';
+            html += '<div class="flex items-center gap-3 text-[11px] text-slate-500"><span class="flex-1 h-px bg-slate-800"></span><span>o</span><span class="flex-1 h-px bg-slate-800"></span></div>';
+            html += '<button id="btnPortalLocal" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-sm transition-colors">' + pEsc(pt('entrarLocal')) + '</button>';
+            html += '<p class="text-[11px] text-slate-500 text-center">' + pEsc(pt('localNota')) + '</p>';
+        }
+        pCajaSet(html);
+        const bg = document.getElementById('btnPortalGoogle');
+        if (bg) bg.addEventListener('click', pGoogle);
+        const bl = document.getElementById('btnPortalLocal');
+        if (bl) bl.addEventListener('click', function () { location.href = 'Maatly.html?local=1'; });
+    }
+
+    async function pGoogle() {
+        if (!pCliente) { pError(pt('errOAuth')); return; }
+        try {
+            /* redirectTo SIN query params: la URL del portal debe estar exacta en la lista de
+               Redirect URLs de Supabase. El destino tras el ingreso viaja en sessionStorage
+               (solo si fue pedido con ?volver=; directo al portal → hub con las dos tarjetas). */
+            const vreq = new URLSearchParams(location.search).get('volver');
+            try { if (vreq && VUELVA_OK.test(vreq)) sessionStorage.setItem('maatlyVolver', vreq); } catch (e2) {}
+            const r = await pCliente.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+            if (r && r.error) throw new Error(r.error.message || 'oauth');
+        } catch (e) {
+            pError((e && e.message) || pt('errOAuth'));
+        }
+    }
+
+    function pError(motivo) {
+        document.getElementById('pSub').textContent = pt('subBienvenida');
+        let html = '';
+        html += '<div class="bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 space-y-2">';
+        html += '  <p class="text-sm font-bold text-rose-300 flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86l-8.5 14.72A1 1 0 002.6 20h18.8a1 1 0 00.81-1.42l-8.5-14.72a1 1 0 00-1.42 0z"></path></svg>' + pEsc(pt('errTit')) + '</p>';
+        html += '  <p class="text-xs text-rose-200/80 break-words">' + pEsc(motivo || '-') + '</p>';
+        html += '</div>';
+        html += '<button id="btnPortalReintentar" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors">' + pEsc(pt('reintentar')) + '</button>';
+        html += '<button id="btnPortalLocal2" class="w-full py-2 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-bold transition-colors">' + pEsc(pt('entrarLocal')) + '</button>';
+        pCajaSet(html);
+        const br = document.getElementById('btnPortalReintentar');
+        if (br) br.addEventListener('click', function () {
+            const v = pVolver();
+            location.href = location.pathname + (v !== 'Maatly.html' ? '?volver=' + encodeURIComponent(v) : '');
+        });
+        const bl2 = document.getElementById('btnPortalLocal2');
+        if (bl2) bl2.addEventListener('click', function () { location.href = 'Maatly.html?local=1'; });
+    }
+
+    async function pDentro() {
+        const user = (pSesion && pSesion.user) ? pSesion.user : null;
+        if (!user) { pFuera(); return; }
+        const email = user.email || '';
+        const nombre = ((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || (email ? String(email).split('@')[0] : '') || 'Maatly').trim() || 'Maatly';
+        /* rol del perfil — decide la tarjeta del panel admin (Ronda B). Si la columna aún no
+           existe (SQL pendiente), el error se registra y se trata como no-admin. */
+        let rol = '';
+        try {
+            const rp = await pCliente.from('profiles').select('rol').eq('id', user.id).maybeSingle();
+            if (rp && rp.error) console.warn('[Portal] rol:', rp.error.message);
+            if (rp && rp.data) rol = rp.data.rol || '';
+        } catch (e) { console.warn('[Portal] rol:', e && e.message); }
+        pRol = rol;
+        document.getElementById('pSub').textContent = pt('yaDentro');
+        let html = '';
+        html += '<div class="flex items-center gap-3 mb-1">';
+        html += '  <span class="w-10 h-10 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center flex-shrink-0">' + pEsc((nombre || '?').charAt(0).toUpperCase()) + '</span>';
+        html += '  <div class="min-w-0"><p class="font-bold text-sm text-white truncate">' + pEsc(nombre) + '</p><p class="text-xs text-slate-400 truncate">' + pEsc(email) + '</p></div>';
+        html += '</div>';
+        html += '<button id="btnPortalApp" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition-colors">' + pEsc(pt('abrirApp')) + '</button>';
+        if (rol === 'admin') {
+            html += '<button id="btnPortalAdmin" class="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm transition-colors">' + pEsc(pt('abrirAdmin')) + '</button>';
+        }
+        html += '<button id="btnPortalSalir" class="w-full py-2 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-bold transition-colors">' + pEsc(pt('salir')) + '</button>';
+        pCajaSet(html);
+        const ba = document.getElementById('btnPortalApp');
+        if (ba) ba.addEventListener('click', function () { location.href = pVolver(); });
+        const bd = document.getElementById('btnPortalAdmin');
+        if (bd) bd.addEventListener('click', function () { location.href = 'admin.html'; });
+        const bs = document.getElementById('btnPortalSalir');
+        if (bs) bs.addEventListener('click', pSalir);
+        /* destino pedido por la puerta o por la app: saltar tras un latido (solo si se pidió) */
+        const dest = pDestinoPedir();
+        if (dest) setTimeout(function () { location.href = dest; }, 700);
+    }
+
+    async function pSalir() {
+        try { if (pCliente) await pCliente.auth.signOut(); } catch (e) { console.warn('[Portal] salir:', e && e.message); }
+        pSesion = null; pRol = '';
+        try { sessionStorage.removeItem('maatlyVolver'); } catch (e2) {}
+        pFuera();
+    }
+
+    /* ---------- regreso de Google (?code= / ?error=) — el fallo se VE ---------- */
+    async function pRegreso() {
+        if (!pCliente) return false;
+        const p = new URLSearchParams(location.search);
+        const codigo = p.get('code');
+        const errTitulo = p.get('error');
+        if (!codigo && !errTitulo) return false;
+        pCajaSet('<div class="flex items-center justify-center gap-3 py-8 text-slate-300 text-sm"><svg class="animate-spin w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg><span>' + pEsc(pt('procesando')) + '</span></div>');
+        let motivo = '';
+        if (codigo) {
+            try {
+                const r = await pCliente.auth.exchangeCodeForSession(codigo);
+                if (r && r.error) motivo = (r.error.message || String(r.error));
+            } catch (e) { motivo = (e && e.message) || String(e); }
+        }
+        if (!motivo && errTitulo) motivo = (p.get('error_description') || p.get('error_code') || errTitulo);
+        pUrlLimpiar();
+        if (motivo) throw new Error(motivo);   /* pBoot la captura → pError con el motivo exacto */
+        /* éxito: la sesión quedó en el storage compartido por el mismo origen */
+        const r2 = await pCliente.auth.getSession();
+        pSesion = (r2 && r2.data && r2.data.session) ? r2.data.session : null;
+        if (!pSesion) throw new Error('sin sesión tras el intercambio del código');
+        return true;
+    }
+
+    /* ---------- arranque ---------- */
+    async function pBoot() {
+        if (pBooted) return;
+        pBooted = true;
+        document.documentElement.lang = pLeng();
+        document.getElementById('pPie').textContent = pt('pie') + ' · ' + VER_PORTAL;
+        try {
+            pCajaSet('<div class="flex items-center justify-center py-8 text-slate-400 text-sm">' + pEsc(pt('cargando')) + '</div>');
+            if (String(PORTAL_CFG.url || '').indexOf('https://') !== 0 || !PORTAL_CFG.key) throw new Error('PORTAL_CFG incompleta');
+            await pCargarSdk();
+            if (!window.supabase || typeof window.supabase.createClient !== 'function') throw new Error('SDK sin createClient');
+            pCliente = window.supabase.createClient(PORTAL_CFG.url, PORTAL_CFG.key, { auth: { detectSessionInUrl: false } });
+            const huboRegreso = await pRegreso();
+            if (!huboRegreso) {
+                const r = await pCliente.auth.getSession();
+                pSesion = (r && r.data && r.data.session) ? r.data.session : null;
+            }
+            if (pSesion) {
+                await pDentro();
+                /* regreso exitoso con destino explícito: el auto-salto lo da pDentro (?volver=) */
+            } else {
+                pFuera();
+            }
+        } catch (e) {
+            console.warn('[Portal] boot:', e && e.message);
+            /* en file:// un fallo de red (SDK/getSession) degrada a la nota honesta, no a un error */
+            if (location.protocol === 'file:') { pFuera(); } else { pError((e && e.message) || 'error'); }
+        }
+    }
+    pBoot();
+    </script>
+</body>
+</html>
