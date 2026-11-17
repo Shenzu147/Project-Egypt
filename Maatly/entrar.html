@@ -53,7 +53,7 @@
        · PORTAL_CFG va sincronizada con SUPA_CFG de Maatly.html (misma url y
          key publishable; la service key JAMÁS va al HTML).
        ================================================================ */
-    const VER_PORTAL = 'v0.57.3';   /* v0.57.3: replay del regreso con sesión viva → «Ya estás dentro» (log real: 4 logins OK en 1 min) */
+    const VER_PORTAL = 'v0.57.4';   /* v0.57.4: flowType pkce EXPLÍCITO (el default implicit ignoraba los tokens del regreso) · v0.57.3: replay con sesión viva → «Ya estás dentro» */
     const PORTAL_CFG = { url: 'https://pshtfyodoxxyzpwgmpoj.supabase.co', key: 'sb_publishable_uPUVWtNJl55Ft5QwfmWmfA_0dFvcQgH' };
 
     const I18N_PORTAL = {
@@ -613,7 +613,12 @@
             if (String(PORTAL_CFG.url || '').indexOf('https://') !== 0 || !PORTAL_CFG.key) throw new Error('PORTAL_CFG incompleta');
             await pCargarSdk();
             if (!window.supabase || typeof window.supabase.createClient !== 'function') throw new Error('SDK sin createClient');
-            pCliente = window.supabase.createClient(PORTAL_CFG.url, PORTAL_CFG.key, { auth: { detectSessionInUrl: false } });
+            /* v0.57.4: flowType 'pkce' EXPLÍCITO — el default del SDK es 'implicit': el callback
+               exitoso devolvía #access_token=… en el HASH y detectSessionInUrl:false lo ignoraba
+               (el login SUCEDÍA en el servidor pero el portal volvía al formulario — el bucle del
+               teléfono). Con PKCE el callback devuelve ?code=… y pRegreso lo intercambia con el
+               verificador que signInWithOAuth guarda en localStorage. */
+            pCliente = window.supabase.createClient(PORTAL_CFG.url, PORTAL_CFG.key, { auth: { detectSessionInUrl: false, flowType: 'pkce' } });
             /* v0.57.1: enlace de recuperación (?token_hash=…&type=recovery) → formulario de contraseña nueva */
             const q = new URLSearchParams(location.search);
             const tokenHash = q.get('token_hash');
