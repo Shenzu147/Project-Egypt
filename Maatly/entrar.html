@@ -53,7 +53,7 @@
        · PORTAL_CFG va sincronizada con SUPA_CFG de Maatly.html (misma url y
          key publishable; la service key JAMÁS va al HTML).
        ================================================================ */
-    const VER_PORTAL = 'v0.57.2';   /* v0.57.2: regreso de Google mapeado (sello · vencido · mal dirigido · cancelado · ya-tiene-cuenta) */
+    const VER_PORTAL = 'v0.57.3';   /* v0.57.3: replay del regreso con sesión viva → «Ya estás dentro» (log real: 4 logins OK en 1 min) */
     const PORTAL_CFG = { url: 'https://pshtfyodoxxyzpwgmpoj.supabase.co', key: 'sb_publishable_uPUVWtNJl55Ft5QwfmWmfA_0dFvcQgH' };
 
     const I18N_PORTAL = {
@@ -632,7 +632,16 @@
         } catch (e) {
             console.warn('[Portal] boot:', e && e.message);
             /* en file:// un fallo de red (SDK/getSession) degrada a la nota honesta, no a un error */
-            if (location.protocol === 'file:') { pFuera(); } else { pError((e && e.message) || 'error'); }
+            if (location.protocol === 'file:') { pFuera(); return; }
+            /* v0.57.3: replay del regreso — el navegador re-dispara el callback ya consumido
+               (historial/atrás) y llega un error de sello/código USADOS cuando la sesión ya
+               está VIVA: mostramos «Ya estás dentro» en vez del error (el ingreso SÍ ocurrió). */
+            try {
+                const g = await pCliente.auth.getSession();
+                const viva = (g && g.data && g.data.session) || null;
+                if (viva) { pSesion = viva; pAviso = pt('yaDentro'); await pDentro(); return; }
+            } catch (e2) {}
+            pError((e && e.message) || 'error');
         }
     }
     pBoot();
