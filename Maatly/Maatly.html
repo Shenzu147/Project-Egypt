@@ -2179,7 +2179,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.57';
+        const VER_APP = 'v0.58';
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -4014,7 +4014,7 @@
         const PERFIL_IDIOMAS = ['es', 'en'];
         const PERFIL_PLANES = ['basico', 'premium', 'admin'];
         const PERFIL_ESTILOS = ['suave', 'equilibrado', 'estricto'];
-        const PERFIL_DEF = { v: 1, nombre: '', idioma: 'es', plan: 'basico', estilo: 'equilibrado', pais: '' };
+        const PERFIL_DEF = { v: 1, nombre: '', idioma: 'es', plan: 'basico', estilo: 'equilibrado', pais: '', snapAuto: true };   /* v0.58: snapAuto = copia automática en la nube (I2b), default ON */
         /* v0.51: catálogo de países del perfil — [code, nombre ES, nombre EN]. Solo texto (sin banderas ni emojis).
            Son los 20 países que hoy mapean limpio a las monedas del catálogo MONEDAS; la lista crece por entrega. */
         const PAIS_LISTA = [
@@ -4054,7 +4054,7 @@
         }
         function perfilSet(patch) {
             const cambios = {};
-            ['nombre', 'idioma', 'plan', 'estilo', 'pais'].forEach(function(k) { if (patch && patch[k] !== undefined) cambios[k] = patch[k]; });
+            ['nombre', 'idioma', 'plan', 'estilo', 'pais', 'snapAuto'].forEach(function(k) { if (patch && patch[k] !== undefined) cambios[k] = patch[k]; });   /* v0.58: snapAuto viaja dentro de maatlyPerfil — 0 claves de storage nuevas */
             const nuevo = Object.assign(perfilGet(), cambios);
             nuevo.v = 1;
             try { localStorage.setItem(K_PERFIL, JSON.stringify(nuevo)); } catch (e) {
@@ -4470,6 +4470,34 @@
                 'su.sinCfg': 'La nube no está configurada todavía.',
                 'su.soloHosted': 'El acceso con Google solo funciona en la app publicada (por su dirección web), no desde un archivo local.',
                 'su.sesion': 'Sesión iniciada con Google',
+                'su.snap.tit': 'Copias en la nube',
+                'su.snap.desc': 'Tu base completa (menos la sesión) guardada en tu cuenta: sirve para pasar de aparato o recuperar tus datos tras una falla.',
+                'su.snap.autoLbl': 'Copia automática',
+                'su.snap.autoDesc': 'mantiene «último estado» al día: se actualiza cada 5 minutos si cambió algo, y al salir de la app.',
+                'su.snap.btnSubir': 'Subir copia a la nube',
+                'su.snap.subiendo': 'Subiendo…',
+                'su.snap.subida': 'Copia subida a la nube ({n} KB)',
+                'su.snap.listaTit': 'Copias guardadas',
+                'su.snap.cargando': 'Cargando copias…',
+                'su.snap.vacia': 'Aún no hay copias en la nube. Sube la primera cuando quieras.',
+                'su.snap.autoFil': 'Último estado',
+                'su.snap.hace': 'hace {n} min',
+                'su.snap.restaurar': 'Restaurar',
+                'su.snap.borrar': 'Borrar',
+                'su.snap.titRest': 'Restaurar copia de la nube',
+                'su.snap.confirmRest': 'Esto reemplazará TODOS los datos de este aparato por la copia del {f}. Tus copias de la nube no se tocan. ¿Continuar?',
+                'su.snap.btnRestSi': 'Sí, restaurar',
+                'su.snap.restaurada': 'Copia restaurada ({n} elementos) — recargando…',
+                'su.snap.titBorr': 'Borrar copia de la nube',
+                'su.snap.confirmBorr': '¿Borrar esta copia de la nube? No se puede deshacer.',
+                'su.snap.btnBorrSi': 'Sí, borrar',
+                'su.snap.borrada': 'Copia borrada',
+                'su.snap.autoOn': 'Copia automática activada',
+                'su.snap.autoOff': 'Copia automática desactivada',
+                'su.snap.errSubir': 'No se pudo subir la copia: {m}',
+                'su.snap.errLista': 'No se pudieron leer las copias: {m}',
+                'su.snap.errLeer': 'No se pudo leer esa copia.',
+                'su.snap.errAplicar': 'No se pudo restaurar la copia: {m}',
                 'ap.colores.t': 'Colores',
                 'ap.colores.d': 'Elige un tema. Se aplica al momento, solo en este dispositivo.',
                 'ap.colores.actuales': 'Colores actuales:',
@@ -5457,6 +5485,34 @@
                 'su.sinCfg': 'The cloud is not set up yet.',
                 'su.soloHosted': 'Google sign-in only works in the published app (from its web address), not from a local file.',
                 'su.sesion': 'Signed in with Google',
+                'su.snap.tit': 'Cloud copies',
+                'su.snap.desc': 'Your complete base (minus the session) stored in your account: handy to move devices or recover your data after a failure.',
+                'su.snap.autoLbl': 'Automatic copy',
+                'su.snap.autoDesc': 'keeps "latest state" up to date: it refreshes every 5 minutes if something changed, and when you leave the app.',
+                'su.snap.btnSubir': 'Upload copy to cloud',
+                'su.snap.subiendo': 'Uploading…',
+                'su.snap.subida': 'Copy uploaded to cloud ({n} KB)',
+                'su.snap.listaTit': 'Saved copies',
+                'su.snap.cargando': 'Loading copies…',
+                'su.snap.vacia': 'No cloud copies yet. Upload the first one whenever you want.',
+                'su.snap.autoFil': 'Latest state',
+                'su.snap.hace': '{n} min ago',
+                'su.snap.restaurar': 'Restore',
+                'su.snap.borrar': 'Delete',
+                'su.snap.titRest': 'Restore cloud copy',
+                'su.snap.confirmRest': 'This will replace ALL data on this device with the copy from {f}. Your cloud copies are untouched. Continue?',
+                'su.snap.btnRestSi': 'Yes, restore',
+                'su.snap.restaurada': 'Copy restored ({n} items) — reloading…',
+                'su.snap.titBorr': 'Delete cloud copy',
+                'su.snap.confirmBorr': 'Delete this cloud copy? This cannot be undone.',
+                'su.snap.btnBorrSi': 'Yes, delete',
+                'su.snap.borrada': 'Copy deleted',
+                'su.snap.autoOn': 'Automatic copy turned on',
+                'su.snap.autoOff': 'Automatic copy turned off',
+                'su.snap.errSubir': 'Could not upload the copy: {m}',
+                'su.snap.errLista': 'Could not read the copies: {m}',
+                'su.snap.errLeer': 'Could not read that copy.',
+                'su.snap.errAplicar': 'Could not restore the copy: {m}',
                 'ap.colores.t': 'Colors',
                 'ap.colores.d': 'Pick a theme. It applies instantly, on this device only.',
                 'ap.colores.actuales': 'Current colors:',
@@ -13465,7 +13521,7 @@
                 supaCliente = window.supabase.createClient(SUPA_CFG.url, SUPA_CFG.key, { auth: { detectSessionInUrl: false } });
                 supaCliente.auth.onAuthStateChange(function (evento, sesion) {
                     supaSesion = sesion || null;
-                    if (evento === 'SIGNED_IN') supaUltimoError = '';
+                    if (evento === 'SIGNED_IN') { supaUltimoError = ''; snapAutoSubir('entra'); }   /* v0.58: el estado actual viaja a la nube al entrar */
                     if (supaSesion && supaSesion.user && (evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION')) supaPerfilAsegurar(supaSesion.user);
                     supaRenderPanel();
                 });
@@ -13477,6 +13533,7 @@
                 console.warn('[Supa] init falló:', e && e.message);
                 supaCliente = null;
             }
+            if (supaCliente) { snapAutoArrancar(); if (supaSesion) snapAutoSubir('entra'); }   /* v0.58: I2b copia automática (timer + baseline al entrar con sesión) */
             supaRenderPanel();
         }
         async function supaPerfilAsegurar(user) {
@@ -13523,6 +13580,173 @@
             supaSesion = null;   /* onAuthStateChange repinta; esto garantiza la limpieza visual */
             supaRenderPanel();
         }
+
+        /* ---------- v0.58 · I2b «Copias en la nube» — snapshot de TODO el localStorage menos la sesión ---------- */
+        /* La copia automática es UNA fila rodante (origen='auto'): se actualiza cada 5 min SOLO si el
+           snapshot cambió, más un envío best-effort al ocultar la pestaña y el estado actual al entrar.
+           Las copias manuales son filas nuevas que NADIE pisa (historia del usuario). La sesión de
+           Supabase (claves sb-*) JAMÁS viaja ni se restaura. Cero claves de storage nuevas. */
+        const SNAP_MAX_LISTA = 15;
+        const SNAP_COOLDOWN_MS = 5 * 60 * 1000;
+        let snapUltimoStr = '';      /* fingerprint del último snapshot subido (evita reenviar lo igual) */
+        let snapUltimoAutoT = 0;     /* ms de la última subida auto (cooldown) */
+        let snapAutoTimer = null;    /* id del setInterval (único) */
+        let snapOcultoWire = false;  /* visibilitychange ya registrado */
+
+        function snapConstruir(origen) {
+            const data = {};
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (!k || k.indexOf('sb-') === 0) continue;   /* la sesión de Supabase jamás viaja */
+                    data[k] = localStorage.getItem(k);
+                }
+            } catch (e) { console.warn('[Snap] construir:', e && e.message); }
+            return { meta: { v: (typeof VER_APP !== 'undefined') ? VER_APP : '', cuando: new Date().toISOString(), origen: origen }, data: data };
+        }
+
+        function snapAutoActivado() {
+            try { return perfilGet().snapAuto !== false; } catch (e) { return true; }
+        }
+
+        async function snapSubirFila(origen, payload) {
+            const bytes = JSON.stringify(payload).length;
+            const r = await supaCliente.from('snapshots').insert({ origen: origen, bytes: bytes, payload: payload });
+            if (r && r.error) throw new Error(r.error.message || 'insert');
+            return bytes;
+        }
+
+        async function snapAutoSubir(motivo) {
+            try {
+                if (!supaCliente || !supaSesion || !supaSesion.user) return;
+                if (!snapAutoActivado()) return;
+                const payload = snapConstruir('auto');
+                const str = JSON.stringify(payload);
+                const esTick = motivo === 'tick';
+                if (str === snapUltimoStr) { if (esTick) snapUltimoAutoT = Date.now(); return; }   /* nada cambió */
+                if (esTick && Date.now() - snapUltimoAutoT < SNAP_COOLDOWN_MS) return;   /* cambió hace poco: espera el próximo tick */
+                /* fila rodante: update si ya existe una 'auto', insert si es la primera vez */
+                const rl = await supaCliente.from('snapshots').select('id').eq('origen', 'auto').order('creado_en', { ascending: false }).limit(1);
+                if (rl && rl.error) { console.warn('[Snap] buscar auto:', rl.error.message); return; }
+                const fila = (rl && rl.data && rl.data[0]) ? rl.data[0] : null;
+                if (fila && fila.id) {
+                    const ru = await supaCliente.from('snapshots').update({ payload: payload, bytes: str.length, creado_en: new Date().toISOString() }).eq('id', fila.id);
+                    if (ru && ru.error) { console.warn('[Snap] update auto:', ru.error.message); return; }
+                } else {
+                    await snapSubirFila('auto', payload);
+                }
+                snapUltimoStr = str; snapUltimoAutoT = Date.now();
+                snapListaCargar();   /* refresca «hace …» si el panel está pintado */
+                console.info('[Snap] copia automática subida (' + motivo + ', ' + Math.round(str.length / 1024) + ' KB)');
+            } catch (e) { console.warn('[Snap] auto:', e && e.message); }
+        }
+
+        function snapAutoArrancar() {
+            if (!snapAutoTimer) snapAutoTimer = setInterval(function () { snapAutoSubir('tick'); }, 60 * 1000);
+            if (!snapOcultoWire) {
+                snapOcultoWire = true;
+                document.addEventListener('visibilitychange', function () {
+                    if (document.visibilityState === 'hidden') snapAutoSubir('oculto');
+                });
+            }
+        }
+
+        async function snapSubirManual() {
+            triggerHaptic();
+            if (!supaCliente || !supaSesion || !supaSesion.user) { mostrarToast(ti('su.sinCfg'), 'error'); return; }
+            const b = document.getElementById('btnSnapSubir');
+            const bt = document.getElementById('btnSnapSubirTxt');
+            if (b) b.disabled = true;
+            if (bt) bt.textContent = ti('su.snap.subiendo');
+            try {
+                const payload = snapConstruir('manual');
+                const bytes = await snapSubirFila('manual', payload);
+                snapUltimoStr = JSON.stringify(payload);   /* el auto no repite lo recién subido */
+                snapUltimoAutoT = Date.now();
+                mostrarToast(tiPlantilla('su.snap.subida', { n: Math.max(1, Math.round(bytes / 1024)) }), 'success');
+                snapListaCargar();
+            } catch (e) {
+                mostrarToast(tiPlantilla('su.snap.errSubir', { m: (e && e.message) || 'error' }), 'error');
+            }
+            if (b) b.disabled = false;
+            if (bt) bt.textContent = ti('su.snap.btnSubir');
+        }
+
+        function snapCuando(iso) {
+            try {
+                const d = new Date(iso);
+                const loc = (typeof idiomaApp === 'function' && idiomaApp() === 'en') ? 'en-US' : 'es-ES';
+                return d.toLocaleDateString(loc, { day: 'numeric', month: 'short' }) + ', ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+            } catch (e) { return String(iso || ''); }
+        }
+
+        function snapHaceMin(iso) {
+            try { return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000)); } catch (e) { return 0; }
+        }
+
+        async function snapListaCargar() {
+            if (!supaCliente || !supaSesion || !supaSesion.user) return;
+            const caja = document.getElementById('snapListaBox');
+            if (!caja) return;
+            try {
+                const r = await supaCliente.from('snapshots').select('id,creado_en,origen,bytes').order('creado_en', { ascending: false }).limit(SNAP_MAX_LISTA);
+                if (r && r.error) { caja.innerHTML = '<p class="text-xs text-rose-600 dark:text-rose-300">' + agEscape(tiPlantilla('su.snap.errLista', { m: r.error.message })) + '</p>'; return; }
+                const filas = (r && r.data) || [];
+                if (!filas.length) { caja.innerHTML = '<p class="text-xs text-slate-500 dark:text-slate-400">' + agEscape(ti('su.snap.vacia')) + '</p>'; return; }
+                let h = '';
+                filas.forEach(function (f) {
+                    const esAuto = f.origen === 'auto';
+                    const tit = esAuto ? ti('su.snap.autoFil') : snapCuando(f.creado_en);
+                    const sub = esAuto ? tiPlantilla('su.snap.hace', { n: snapHaceMin(f.creado_en) }) : Math.max(1, Math.round((f.bytes || 0) / 1024)) + ' KB';
+                    h += '<div class="flex items-center justify-between gap-2 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">';
+                    h += '  <div class="min-w-0">';
+                    h += '    <p class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">' + agEscape(tit) + (esAuto ? ' <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold">auto</span>' : '') + '</p>';
+                    h += '    <p class="text-[11px] text-slate-400 dark:text-slate-500">' + agEscape(sub) + '</p>';
+                    h += '  </div>';
+                    h += '  <div class="flex items-center gap-1 flex-shrink-0">';
+                    h += '    <button data-snap-rest="' + f.id + '" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-[11px] font-bold transition-colors">' + agEscape(ti('su.snap.restaurar')) + '</button>';
+                    h += '    <button data-snap-borr="' + f.id + '" class="px-2 py-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 text-[11px] font-bold transition-colors">' + agEscape(ti('su.snap.borrar')) + '</button>';
+                    h += '  </div>';
+                    h += '</div>';
+                });
+                caja.innerHTML = h;
+            } catch (e) {
+                caja.innerHTML = '<p class="text-xs text-rose-600 dark:text-rose-300">' + agEscape(tiPlantilla('su.snap.errLista', { m: (e && e.message) || 'error' })) + '</p>';
+            }
+        }
+
+        async function snapRestaurar(id) {
+            if (!supaCliente || !id) return;
+            triggerHaptic();
+            const r = await supaCliente.from('snapshots').select('creado_en,payload').eq('id', id).maybeSingle();
+            if (!r || !r.data || !r.data.payload) { mostrarToast(ti('su.snap.errLeer'), 'error'); return; }
+            const cuando = snapCuando(r.data.creado_en);
+            showModal(ti('su.snap.titRest'), tiPlantilla('su.snap.confirmRest', { f: cuando }), ti('su.snap.btnRestSi'), 'bg-indigo-600 hover:bg-indigo-700', function () {
+                try {
+                    const data = (r.data.payload && r.data.payload.data) || {};
+                    let n = 0;
+                    for (const k in data) {
+                        if (k.indexOf('sb-') === 0) continue;   /* la sesión local jamás se pisa */
+                        localStorage.setItem(k, String(data[k] == null ? '' : data[k]));
+                        n++;
+                    }
+                    mostrarToast(tiPlantilla('su.snap.restaurada', { n: n }), 'success');
+                    setTimeout(function () { location.reload(); }, 1200);
+                } catch (e) { mostrarToast(tiPlantilla('su.snap.errAplicar', { m: (e && e.message) || 'error' }), 'error'); }
+            });
+        }
+
+        async function snapBorrar(id) {
+            if (!supaCliente || !id) return;
+            triggerHaptic();
+            showModal(ti('su.snap.titBorr'), ti('su.snap.confirmBorr'), ti('su.snap.btnBorrSi'), 'bg-red-600 hover:bg-red-700', async function () {
+                const r = await supaCliente.from('snapshots').delete().eq('id', id);
+                if (r && r.error) { mostrarToast(tiPlantilla('su.snap.errLista', { m: r.error.message }), 'error'); return; }
+                mostrarToast(ti('su.snap.borrada'), 'success');
+                snapListaCargar();
+            });
+        }
+
         function supaRenderPanel() {
             const cont = document.getElementById('cfgBodyCuenta');
             if (!cont) return;
@@ -13560,6 +13784,20 @@
                 html += '  </div>';
                 html += '  <button id="btnSupaSalir" class="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-bold rounded-lg text-xs transition-colors flex-shrink-0">' + ti('su.salir') + '</button>';
                 html += '</div>';
+                /* v0.58 · I2b: copias en la nube (solo con sesión) — snapshot completo + auto rodante */
+                html += '<div class="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3">';
+                html += '  <h4 class="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>' + ti('su.snap.tit') + '</h4>';
+                html += '  <p class="text-xs text-slate-500 dark:text-slate-400">' + ti('su.snap.desc') + '</p>';
+                html += '  <label class="flex items-start gap-2 cursor-pointer">';
+                html += '    <input type="checkbox" id="chkSnapAuto" class="mt-0.5 w-4 h-4 accent-indigo-600"' + (snapAutoActivado() ? ' checked' : '') + '>';
+                html += '    <span class="text-xs text-slate-600 dark:text-slate-300"><b class="font-bold">' + ti('su.snap.autoLbl') + '</b> · ' + ti('su.snap.autoDesc') + '</span>';
+                html += '  </label>';
+                html += '  <button id="btnSnapSubir" class="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 font-semibold rounded-lg text-xs transition-colors border border-indigo-100 dark:border-indigo-800/50 flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg><span id="btnSnapSubirTxt">' + ti('su.snap.btnSubir') + '</span></button>';
+                html += '  <div>';
+                html += '    <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1">' + ti('su.snap.listaTit') + '</p>';
+                html += '    <div id="snapListaBox" class="text-slate-500 dark:text-slate-400"><p class="text-xs">' + ti('su.snap.cargando') + '</p></div>';
+                html += '  </div>';
+                html += '</div>';
             }
             /* Sin sesión: botón al PORTAL de entrada (el botón de Google vive ahí — v0.57) */
             if (!user && !enFile) {
@@ -13589,6 +13827,24 @@
             if (btnEntrar) btnEntrar.addEventListener('click', supaSignIn);
             const btnSalir = document.getElementById('btnSupaSalir');
             if (btnSalir) btnSalir.addEventListener('click', supaSignOut);
+            /* v0.58 · I2b: copias en la nube — subir / interruptor auto / delegación de la lista */
+            const btnSnapSubir = document.getElementById('btnSnapSubir');
+            if (btnSnapSubir) btnSnapSubir.addEventListener('click', snapSubirManual);
+            const chkSnapAuto = document.getElementById('chkSnapAuto');
+            if (chkSnapAuto) chkSnapAuto.addEventListener('change', function () {
+                perfilSet({ snapAuto: chkSnapAuto.checked });
+                mostrarToast(ti(chkSnapAuto.checked ? 'su.snap.autoOn' : 'su.snap.autoOff'), chkSnapAuto.checked ? 'success' : 'info');
+            });
+            const snapListaBox = document.getElementById('snapListaBox');
+            if (snapListaBox) {
+                snapListaBox.addEventListener('click', function (ev) {
+                    const br = ev.target.closest('[data-snap-rest]');
+                    const bb = ev.target.closest('[data-snap-borr]');
+                    if (br) snapRestaurar(br.getAttribute('data-snap-rest'));
+                    else if (bb) snapBorrar(bb.getAttribute('data-snap-borr'));
+                });
+                snapListaCargar();
+            }
         }
         i18nRefrescar(supaRenderPanel);   /* v0.56: el panel de la cuenta se repinta al cambiar el idioma */
 
