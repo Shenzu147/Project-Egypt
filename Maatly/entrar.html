@@ -53,7 +53,7 @@
        · PORTAL_CFG va sincronizada con SUPA_CFG de Maatly.html (misma url y
          key publishable; la service key JAMÁS va al HTML).
        ================================================================ */
-    const VER_PORTAL = 'v0.57';
+    const VER_PORTAL = 'v0.57.2';   /* v0.57.2: regreso de Google mapeado (sello · vencido · mal dirigido · cancelado · ya-tiene-cuenta) */
     const PORTAL_CFG = { url: 'https://pshtfyodoxxyzpwgmpoj.supabase.co', key: 'sb_publishable_uPUVWtNJl55Ft5QwfmWmfA_0dFvcQgH' };
 
     const I18N_PORTAL = {
@@ -99,7 +99,14 @@
             errNoConfirmado: 'Este correo aún no está confirmado. Entra con Google o usa la recuperación.',
             errLimite: 'Demasiados intentos. Espera un momento y vuelve a probar.',
             errEnlaceVencido: 'Ese enlace ya expiró o ya se usó: pide otro.',
-            errDesconocido: 'Algo falló. Inténtalo de nuevo.'
+            errDesconocido: 'Algo falló. Inténtalo de nuevo.',
+            /* v0.57.2: regreso de Google — fallos mapeados a frases accionables (el crudo queda de respaldo) */
+            errRegresoSello: 'El regreso de Google llegó sin su sello de seguridad. Cierra todas las pestañas de Maatly, abre el portal de nuevo (mejor en Chrome actualizado) y reintenta una sola vez.',
+            errRegresoVencido: 'El sello de seguridad de ese intento venció (flujo anterior). Abre el portal de nuevo y reintenta.',
+            errRegresoMalDirigido: 'Google devolvió el flujo directo al portal en vez del callback de Supabase. Revisa el campo «Redirect URL» del proveedor Google en el dashboard: debe ser https://…supabase.co/auth/v1/callback.',
+            errGoogleCancelado: 'Cancelaste el acceso con Google. Reintenta cuando quieras.',
+            errYaTieneCuenta: 'Ese correo ya tiene cuenta con contraseña en Maatly: entra con email y contraseña (o recupérala) y enlaza Google después desde tu cuenta.',
+            errRegresoServidor: 'Falla temporal del servidor al completar el ingreso. Espera un momento y reintenta.'
         },
         en: {
             subBienvenida: 'Your money and your goals — choose how to enter',
@@ -143,7 +150,14 @@
             errNoConfirmado: 'This email is not confirmed yet. Sign in with Google or use recovery.',
             errLimite: 'Too many attempts. Wait a moment and try again.',
             errEnlaceVencido: 'That link expired or was already used: request a new one.',
-            errDesconocido: 'Something failed. Try again.'
+            errDesconocido: 'Something failed. Try again.',
+            /* v0.57.2: Google return — failures mapped to actionable phrases (raw stays as fallback) */
+            errRegresoSello: 'The return from Google arrived without its security seal. Close every Maatly tab, open the portal again (preferably in an updated Chrome) and retry once.',
+            errRegresoVencido: 'The security seal for that attempt expired (an older flow). Open the portal again and retry.',
+            errRegresoMalDirigido: 'Google returned the flow straight to the portal instead of the Supabase callback. Check the Redirect URL field of the Google provider in the dashboard: it must be https://…supabase.co/auth/v1/callback.',
+            errGoogleCancelado: 'You cancelled the Google access. Retry whenever you want.',
+            errYaTieneCuenta: 'That email already has a password account in Maatly: sign in with email and password (or recover it) and link Google afterwards from your account.',
+            errRegresoServidor: 'Temporary server failure while completing the sign-in. Wait a moment and retry.'
         }
     };
 
@@ -544,22 +558,41 @@
         pFuera();
     }
 
-    /* ---------- regreso de Google (?code= / ?error=) — el fallo se VE ---------- */
+    /* ---------- regreso de Google (?code= / ?error=) — el fallo se VE y se MAPEA ---------- */
+    /* v0.57.2: los códigos del callback (bad_oauth_callback · bad_oauth_state · identity_already_exists…)
+       se traducen a frases accionables del dict; lo desconocido pasa crudo para el diagnóstico.
+       Lee query Y hash: un regreso mal dirigido (o un error de flujo implícito) puede llegar en #. */
+    function pMotivoRegreso(lee, errTitulo) {
+        if (errTitulo === 'access_denied') return pt('errGoogleCancelado');
+        const ec = lee('error_code') || '';
+        if (ec === 'bad_oauth_callback') return pt('errRegresoSello');
+        if (ec === 'bad_oauth_state') return pt('errRegresoVencido');
+        if (ec === 'identity_already_exists') return pt('errYaTieneCuenta');
+        if (ec === 'server_error') return pt('errRegresoServidor');
+        return lee('error_description') || ec || errTitulo;
+    }
     async function pRegreso() {
         if (!pCliente) return false;
         const p = new URLSearchParams(location.search);
-        const codigo = p.get('code');
-        const errTitulo = p.get('error');
+        const ph = new URLSearchParams(String(location.hash || '').replace(/^#/, ''));
+        const lee = function (k) { return p.get(k) || ph.get(k); };
+        const codigo = lee('code');
+        const estado = lee('state');
+        const errTitulo = lee('error');
         if (!codigo && !errTitulo) return false;
         pCajaSet('<div class="flex items-center justify-center gap-3 py-8 text-slate-300 text-sm"><svg class="animate-spin w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg><span>' + pEsc(pt('procesando')) + '</span></div>');
         let motivo = '';
-        if (codigo) {
+        if (codigo && estado && !errTitulo && lee('scope')) {
+            /* v0.57.2: regreso MAL DIRIGIDO — Google devolvió el flujo al portal (con scope y state
+               propios del proveedor): ese código no es el código de app y aquí no se puede intercambiar. */
+            motivo = pt('errRegresoMalDirigido');
+        } else if (codigo) {
             try {
                 const r = await pCliente.auth.exchangeCodeForSession(codigo);
                 if (r && r.error) motivo = (r.error.message || String(r.error));
             } catch (e) { motivo = (e && e.message) || String(e); }
         }
-        if (!motivo && errTitulo) motivo = (p.get('error_description') || p.get('error_code') || errTitulo);
+        if (!motivo && errTitulo) motivo = pMotivoRegreso(lee, errTitulo);
         pUrlLimpiar();
         if (motivo) throw new Error(motivo);   /* pBoot la captura → pError con el motivo exacto */
         /* éxito: la sesión quedó en el storage compartido por el mismo origen */
