@@ -2185,7 +2185,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.58.1';   /* v0.58.1: sello de Netlify reubicado encima de la barra móvil (ya no tapa Calendario/Historial) · v0.58: I2b copias en la nube */
+        const VER_APP = 'v0.59';   /* v0.59: I4-lite sync en vivo (push/pull + merge + Realtime) · v0.58.1: sello de Netlify sobre la barra móvil · v0.58: I2b copias en la nube */
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -4060,7 +4060,7 @@
         }
         function perfilSet(patch) {
             const cambios = {};
-            ['nombre', 'idioma', 'plan', 'estilo', 'pais', 'snapAuto'].forEach(function(k) { if (patch && patch[k] !== undefined) cambios[k] = patch[k]; });   /* v0.58: snapAuto viaja dentro de maatlyPerfil — 0 claves de storage nuevas */
+            ['nombre', 'idioma', 'plan', 'estilo', 'pais', 'snapAuto', 'syncAuto'].forEach(function(k) { if (patch && patch[k] !== undefined) cambios[k] = patch[k]; });   /* v0.58: snapAuto / v0.59: syncAuto viajan dentro de maatlyPerfil — 0 claves de storage nuevas */
             const nuevo = Object.assign(perfilGet(), cambios);
             nuevo.v = 1;
             try { localStorage.setItem(K_PERFIL, JSON.stringify(nuevo)); } catch (e) {
@@ -4478,6 +4478,21 @@
                 'su.sesion': 'Sesión iniciada con Google',
                 'su.snap.tit': 'Copias en la nube',
                 'su.snap.desc': 'Tu base completa (menos la sesión) guardada en tu cuenta: sirve para pasar de aparato o recuperar tus datos tras una falla.',
+                'su.sync.tit': 'Sincronización en vivo',
+                'su.sync.desc': 'Lo que escribes aquí aparece en tus otros aparatos en segundos: movimientos, ahorro, Kanban, historial y configuración viajan por tu cuenta.',
+                'su.sync.nunca': 'Aún sin sincronizar',
+                'su.sync.hace': 'Última sync: hace {n} min',
+                'su.sync.alDia': 'Colecciones al día: {n} de {t}',
+                'su.sync.autoLbl': 'Sync automática',
+                'su.sync.autoDesc': 'Al escribir, al volver al foco, al recuperar internet y cada 45 s.',
+                'su.sync.autoOn': 'Sync automática activada',
+                'su.sync.autoOff': 'Sync automática desactivada: usa «Sincronizar ahora» para subir y bajar a mano.',
+                'su.sync.btnAhora': 'Sincronizar ahora',
+                'su.sync.subiendo': 'Sincronizando…',
+                'su.sync.err': 'Sync: {m}',
+                'su.sync.conflicto': 'Sync: este aparato mantiene su cambio pendiente por enviar (la nube traía otra versión de esa colección).',
+                'su.sync.escucha': 'En vivo: conectado',
+                'su.sync.escuchaOff': 'En vivo: sin conexión',
                 'su.snap.autoLbl': 'Copia automática',
                 'su.snap.autoDesc': 'mantiene «último estado» al día: se actualiza cada 5 minutos si cambió algo, y al salir de la app.',
                 'su.snap.btnSubir': 'Subir copia a la nube',
@@ -5493,6 +5508,21 @@
                 'su.sesion': 'Signed in with Google',
                 'su.snap.tit': 'Cloud copies',
                 'su.snap.desc': 'Your complete base (minus the session) stored in your account: handy to move devices or recover your data after a failure.',
+                'su.sync.tit': 'Live sync',
+                'su.sync.desc': 'What you write here shows up on your other devices within seconds: movements, savings, Kanban, history and configuration travel through your account.',
+                'su.sync.nunca': 'Not synced yet',
+                'su.sync.hace': 'Last sync: {n} min ago',
+                'su.sync.alDia': 'Collections up to date: {n} of {t}',
+                'su.sync.autoLbl': 'Automatic sync',
+                'su.sync.autoDesc': 'On write, on focus, on reconnect, and every 45 s.',
+                'su.sync.autoOn': 'Automatic sync on',
+                'su.sync.autoOff': 'Automatic sync off: use "Sync now" to push and pull by hand.',
+                'su.sync.btnAhora': 'Sync now',
+                'su.sync.subiendo': 'Syncing…',
+                'su.sync.err': 'Sync: {m}',
+                'su.sync.conflicto': 'Sync: this device keeps its pending unsent change (the cloud had another version of that collection).',
+                'su.sync.escucha': 'Live: connected',
+                'su.sync.escuchaOff': 'Live: not connected',
                 'su.snap.autoLbl': 'Automatic copy',
                 'su.snap.autoDesc': 'keeps "latest state" up to date: it refreshes every 5 minutes if something changed, and when you leave the app.',
                 'su.snap.btnSubir': 'Upload copy to cloud',
@@ -13528,7 +13558,13 @@
                 supaCliente.auth.onAuthStateChange(function (evento, sesion) {
                     supaSesion = sesion || null;
                     if (evento === 'SIGNED_IN') { supaUltimoError = ''; snapAutoSubir('entra'); }   /* v0.58: el estado actual viaja a la nube al entrar */
-                    if (supaSesion && supaSesion.user && (evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION')) supaPerfilAsegurar(supaSesion.user);
+                    if (supaSesion && supaSesion.user && (evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION')) {
+                        supaPerfilAsegurar(supaSesion.user);
+                        /* v0.59: sync en vivo — arranca, baja lo remoto y escucha Realtime */
+                        syncArrancar();
+                        syncBajarTodo();
+                        syncEscuchar(supaSesion.user.id);
+                    }
                     supaRenderPanel();
                 });
                 await supaRegresoProcesar();   /* ?code= / ?error= — motivo visible si el intercambio falla */
@@ -13539,7 +13575,10 @@
                 console.warn('[Supa] init falló:', e && e.message);
                 supaCliente = null;
             }
-            if (supaCliente) { snapAutoArrancar(); if (supaSesion) snapAutoSubir('entra'); }   /* v0.58: I2b copia automática (timer + baseline al entrar con sesión) */
+            if (supaCliente) {
+                snapAutoArrancar();
+                if (supaSesion) { snapAutoSubir('entra'); syncBajarTodo(); }   /* v0.58 I2b + v0.59: primera bajada de la sync */
+            }
             supaRenderPanel();
         }
         async function supaPerfilAsegurar(user) {
@@ -13753,6 +13792,361 @@
             });
         }
 
+        /* ==================================================
+           v0.59 · I4-lite «Sync en vivo» — push/pull por colección con merge.
+           Tabla public.datos (user_id, coleccion, datos jsonb, actualizado_en):
+           - arrays      → datos = { items: [...], tumbas: [{id, ts}] }
+           - objetos/str → datos = { valor: ... }
+           El localStorage sigue siendo el cache del aparato: offline 100 % funcional.
+           Merge de arrays = UNIÓN por id (local gana si el mismo id difiere) y las
+           tumbas evitan resucitar borrados. Objetos/str = LWW honesto: el remoto
+           manda salvo que exista cambio local posterior al último pull. */
+
+        const SYNC_DEFS = [
+            { k: 'maatlyMovimientos', t: 'arr' },
+            { k: 'maatlyAportesAhorro', t: 'arr' },
+            { k: 'maatlyRetirosAhorro', t: 'arr' },
+            { k: 'maatlyApartadosPozo', t: 'arr' },
+            { k: 'maatlyMetasCumplidas', t: 'arr' },
+            { k: 'maatlyArchivoMensual', t: 'arr' },
+            { k: 'historialUltimate', t: 'arr' },   /* clave SIN prefijo: la Historia (id = fechaStr) */
+            { k: 'maatlyIngresoHist', t: 'arr' },
+            { k: 'kanbanActividades', t: 'arr' },
+            { k: 'kanbanEstados', t: 'arr' },
+            { k: 'maatlyPerfil', t: 'obj' },
+            { k: 'maatlyFinanzasCfg', t: 'obj' },
+            { k: 'maatlyMesActivo', t: 'str' },
+            { k: 'tasaCambio', t: 'str' }           /* clave SIN prefijo: fallback de tasa */
+        ];
+        const SYNC_MAP = {};
+        SYNC_DEFS.forEach(function (d) { SYNC_MAP[d.k] = d; });
+        const SYNC_DEBOUNCE_MS = 3000;   /* empuje tras guardar (agrupa ráfagas) */
+        const SYNC_PULL_MS = 45000;      /* bajada de fondo con sesión */
+
+        let syncCache = {};         /* clave → raw del último valor conocido (diff para tumbas) */
+        let syncSucia = {};         /* clave → true (pendiente de subir) */
+        let syncSuciaDesde = {};    /* clave → ms del cambio local en curso (LWW) */
+        let syncUltimoEmpuje = {};  /* clave → ISO que subimos (ignora el eco del Realtime) */
+        let syncUltimaSyncT = 0;    /* ms de la última sync completa (estado del panel) */
+        let syncTimer = null, syncPullTimer = null, syncWire = false, syncEnVuelo = false, syncSile = false;
+        let syncCanal = null, syncCanalUid = '', syncEscuchaEstado = '';
+        let syncHookOk = false;
+
+        function syncAutoActivado() {
+            try { return !(perfilGet().syncAuto === false); } catch (e) { return true; }
+        }
+        function syncMarcasGet() { try { const m = JSON.parse(localStorage.getItem('maatlySyncMarcas')); return (m && typeof m === 'object') ? m : {}; } catch (e) { return {}; } }
+        function syncMarcasSet(m) { try { localStorage.setItem('maatlySyncMarcas', JSON.stringify(m || {})); } catch (e) {} }
+        function syncTumbasGet() { try { const t = JSON.parse(localStorage.getItem('maatlySyncTumbas')); return (t && typeof t === 'object') ? t : {}; } catch (e) { return {}; } }
+        function syncTumbasSet(t) { try { localStorage.setItem('maatlySyncTumbas', JSON.stringify(t || {})); } catch (e) {} }
+
+        function syncInstalarHook() {
+            if (syncHookOk) return;
+            try {
+                /* v0.59: anclamos a la INSTANCIA de localStorage — wdInstalar ya la envuelve a ese nivel
+                   (watchdog de cuota), así la cadena queda sync → watchdog → nativo y NADIE nos hace sombra. */
+                const orig = localStorage.setItem.bind(localStorage);
+                localStorage.setItem = function (k, v) {
+                    orig(k, v);
+                    try { syncDespuesGuardar(String(k), v); } catch (e) {}
+                };
+                syncHookOk = true;
+            } catch (e) { console.warn('[Sync] hook no instalado:', e && e.message); }
+        }
+
+        /* El hook se instala en PARSE y el cache se siembra con lo existente ANTES de
+           cualquier escritura del arranque: sin cache previa no hay tumba (evita las
+           falsas tumbas de las migraciones). */
+        syncInstalarHook();
+        SYNC_DEFS.forEach(function (d) {
+            if (syncCache[d.k] != null) return;
+            try { const raw = localStorage.getItem(d.k); syncCache[d.k] = (raw == null) ? null : String(raw); } catch (e) { syncCache[d.k] = null; }
+        });
+
+        function syncDespuesGuardar(k, vStr) {
+            if (syncSile) return;
+            const def = SYNC_MAP[k];
+            if (!def) return;
+            const antes = syncCache[k];
+            const ahora = String(vStr == null ? '' : vStr);
+            syncCache[k] = ahora;
+            if (!syncSucia[k]) { syncSucia[k] = true; syncSuciaDesde[k] = Date.now(); }
+            const m = syncMarcasGet();
+            m[k] = Object.assign({}, m[k], { ts: Date.now() });
+            syncMarcasSet(m);
+            if (def.t === 'arr' && typeof antes === 'string' && antes !== ahora) {
+                let viejos = null, nuevos = null;
+                try { viejos = JSON.parse(antes); nuevos = JSON.parse(ahora); } catch (e) { viejos = null; }
+                if (Array.isArray(viejos) && Array.isArray(nuevos)) {
+                    const quedan = {};
+                    nuevos.forEach(function (x) { if (x && x.id != null) quedan[String(x.id)] = true; });
+                    const tumbas = syncTumbasGet();
+                    const lista = Array.isArray(tumbas[k]) ? tumbas[k].slice() : [];
+                    let n = 0;
+                    viejos.forEach(function (x) {
+                        const id = (x && x.id != null) ? String(x.id) : null;
+                        if (id && !quedan[id]) { lista.push({ id: id, ts: new Date().toISOString() }); n++; }
+                    });
+                    if (n) { tumbas[k] = lista.slice(-300); syncTumbasSet(tumbas); }
+                }
+            }
+            syncProgramarEmpuje();
+        }
+
+        function syncProgramarEmpuje() {
+            if (!supaCliente || !supaSesion || !supaSesion.user) return;
+            if (!syncAutoActivado()) return;   /* auto OFF: solo sube el botón «Sincronizar ahora» */
+            if (syncTimer) clearTimeout(syncTimer);
+            syncTimer = setTimeout(function () { syncTimer = null; syncEmpujarSucias(); }, SYNC_DEBOUNCE_MS);
+        }
+
+        async function syncEmpujarSucias(forzado) {
+            if (!supaCliente || !supaSesion || !supaSesion.user) return;
+            if (!forzado && !syncAutoActivado()) return;
+            if (syncEnVuelo) { syncProgramarEmpuje(); return; }   /* encadena para el próximo tick */
+            const claves = Object.keys(syncSucia).filter(function (k) { return syncSucia[k] && SYNC_MAP[k]; });
+            if (!claves.length) return;
+            syncEnVuelo = true;
+            const uid = supaSesion.user.id;
+            const ahoraISO = new Date().toISOString();
+            const tumbas = syncTumbasGet();
+            const filas = [];
+            claves.forEach(function (k) {
+                syncSucia[k] = false;
+                try {
+                    const raw = localStorage.getItem(k);
+                    const def = SYNC_MAP[k];
+                    let datos = null;
+                    if (def.t === 'arr') {
+                        const arr = JSON.parse(raw);
+                        if (!Array.isArray(arr)) return;
+                        datos = { items: arr, tumbas: Array.isArray(tumbas[k]) ? tumbas[k].slice(-300) : [] };
+                    } else if (def.t === 'str') {
+                        datos = { valor: (raw == null) ? '' : String(raw) };
+                    } else {
+                        datos = { valor: JSON.parse(raw) };
+                    }
+                    filas.push({ user_id: uid, coleccion: k, datos: datos, actualizado_en: ahoraISO });
+                    syncUltimoEmpuje[k] = ahoraISO;
+                } catch (e) { console.warn('[Sync] serializar ' + k + ':', e && e.message); }
+            });
+            if (!filas.length) { syncEnVuelo = false; return; }
+            try {
+                const r = await supaCliente.from('datos').upsert(filas, { onConflict: 'user_id,coleccion' });
+                if (r && r.error) {
+                    console.warn('[Sync] empuje:', r.error.message);
+                    mostrarToast(tiPlantilla('su.sync.err', { m: r.error.message }), 'error');
+                    filas.forEach(function (f) { syncSucia[f.coleccion] = true; });
+                } else {
+                    syncUltimaSyncT = Date.now();
+                    syncRepintarEstado();
+                }
+            } catch (e) {
+                console.warn('[Sync] empuje:', e && e.message);
+                filas.forEach(function (f) { syncSucia[f.coleccion] = true; });
+            }
+            syncEnVuelo = false;
+        }
+
+        function syncTumbasUnir(k, remotas) {
+            const tumbas = syncTumbasGet();
+            const todas = (Array.isArray(tumbas[k]) ? tumbas[k] : []).concat(Array.isArray(remotas) ? remotas : []);
+            const porId = {};
+            todas.forEach(function (t) {
+                if (!t || t.id == null) return;
+                const id = String(t.id), ts = Date.parse(t.ts) || 0;
+                if (!porId[id] || ts > porId[id]) porId[id] = ts;
+            });
+            const lista = Object.keys(porId).map(function (id) { return { id: id, ts: new Date(porId[id]).toISOString() }; })
+                .sort(function (a, b) { return Date.parse(b.ts) - Date.parse(a.ts); }).slice(0, 300);
+            tumbas[k] = lista;
+            syncTumbasSet(tumbas);
+            return lista;
+        }
+
+        function syncMergeArray(local, remotoItems, tumbasTodas) {
+            const tombs = {};
+            (Array.isArray(tumbasTodas) ? tumbasTodas : []).forEach(function (t) { if (t && t.id != null) tombs[String(t.id)] = true; });
+            const porId = {};
+            (Array.isArray(local) ? local : []).forEach(function (x) { if (x && x.id != null) porId[String(x.id)] = x; });
+            let conflictos = 0;
+            (Array.isArray(remotoItems) ? remotoItems : []).forEach(function (x) {
+                if (!x || x.id == null) return;
+                const id = String(x.id);
+                if (porId[id]) {
+                    if (JSON.stringify(porId[id]) !== JSON.stringify(x)) { conflictos++; console.warn('[Sync] mismo id con contenido distinto — gana el local:', id); }
+                } else porId[id] = x;
+            });
+            const salida = [];
+            Object.keys(porId).forEach(function (id) { if (!tombs[id]) salida.push(porId[id]); });
+            return { items: salida, conflictos: conflictos };
+        }
+
+        function syncEscribirLocal(k, raw) {
+            syncSile = true;
+            try { localStorage.setItem(k, raw); } finally { syncSile = false; }
+            syncCache[k] = raw;
+        }
+
+        function syncPerfilReaccionar() {
+            try {
+                const s = document.getElementById('selIdiomaApp');
+                const p = perfilGet();
+                if (s && p.idioma && s.value !== p.idioma) s.value = p.idioma;
+                if (typeof perfilTextos === 'function') perfilTextos();
+                if (window.i18nRepintar) window.i18nRepintar();
+            } catch (e) {}
+        }
+
+        /* Aplica una fila remota a lo local. Devuelve true si escribió algo. */
+        function syncAplicarRemoto(k, datos, iso) {
+            const def = SYNC_MAP[k];
+            if (!def || !datos || typeof datos !== 'object') return false;
+            const remotoMs = Date.parse(iso) || 0;
+            const m = syncMarcasGet();
+            const marca = m[k] || {};
+            /* eco: la fila es exactamente la que este aparato acaba de subir */
+            if (syncUltimoEmpuje[k] === iso) { marca.pull = remotoMs; m[k] = marca; syncMarcasSet(m); return false; }
+            let aplico = false;
+            if (def.t === 'arr') {
+                let local = [];
+                try { local = JSON.parse(localStorage.getItem(k)); if (!Array.isArray(local)) local = []; } catch (e) { local = []; }
+                const lista = syncTumbasUnir(k, datos.tumbas);
+                const uni = syncMergeArray(local, datos.items, lista);
+                const rawN = JSON.stringify(uni.items);
+                const rawA = (syncCache[k] == null) ? JSON.stringify(local) : syncCache[k];
+                if (rawN !== rawA) { syncEscribirLocal(k, rawN); aplico = true; }
+            } else {
+                /* LWW honesto: gana el más nuevo — último cambio local (syncSuciaDesde) vs actualizado_en remoto.
+                   Si el remoto descarta cambios locales sucios, avisa con el toast de conflicto. */
+                const desdeMs = syncSuciaDesde[k] || 0;
+                if (remotoMs > desdeMs) {
+                    const habiaSucia = !!syncSucia[k];
+                    let rawN;
+                    if (def.t === 'str') rawN = String(datos.valor == null ? '' : datos.valor);
+                    else { try { rawN = JSON.stringify(datos.valor); } catch (e) { return false; } }
+                    const rawA = (syncCache[k] == null) ? localStorage.getItem(k) : syncCache[k];
+                    if (rawN !== rawA) { syncEscribirLocal(k, rawN); aplico = true; if (k === 'maatlyPerfil') syncPerfilReaccionar(); }
+                    if (habiaSucia) { syncSucia[k] = false; mostrarToast(tiPlantilla('su.sync.conflicto', { n: 1 }), 'info'); }
+                }
+                /* else: local gana — queda sucia y subirá con el próximo empuje */
+            }
+            marca.pull = remotoMs;
+            m[k] = marca;
+            syncMarcasSet(m);
+            return aplico;
+        }
+
+        async function syncBajarTodo() {
+            if (!supaCliente || !supaSesion || !supaSesion.user) return;
+            if (syncEnVuelo) return;   /* no pises un empuje en vuelo: el eco/45 s cubren */
+            try {
+                const r = await supaCliente.from('datos').select('coleccion,datos,actualizado_en').eq('user_id', supaSesion.user.id);
+                if (r && r.error) { console.warn('[Sync] bajar:', r.error.message); return; }
+                let aplicadas = 0;
+                ((r && r.data) || []).forEach(function (f) {
+                    try { if (syncAplicarRemoto(f.coleccion, f.datos, f.actualizado_en)) aplicadas++; } catch (e) { console.warn('[Sync] aplicar:', e && e.message); }
+                });
+                syncUltimaSyncT = Date.now();
+                if (aplicadas) syncRepintar();
+                syncRepintarEstado();
+            } catch (e) { console.warn('[Sync] bajar:', e && e.message); }
+        }
+
+        async function syncBajarColeccion(col, fila) {
+            if (!supaCliente || !supaSesion || !supaSesion.user || !col || syncEnVuelo) return;
+            try {
+                if (!fila) {
+                    const r = await supaCliente.from('datos').select('coleccion,datos,actualizado_en').eq('user_id', supaSesion.user.id).eq('coleccion', col).maybeSingle();
+                    if (r && r.error) { console.warn('[Sync] fila:', r.error.message); return; }
+                    fila = (r && r.data) || null;
+                }
+                if (!fila) return;
+                if (syncAplicarRemoto(fila.coleccion, fila.datos, fila.actualizado_en)) { syncRepintar(); syncRepintarEstado(); }
+            } catch (e) { console.warn('[Sync] fila:', e && e.message); }
+        }
+
+        function syncRepintar() {
+            try { actualizarKPIs(); } catch (e) {}
+            try { renderizarPlanesAhorro(); } catch (e) {}
+            try { renderizarMovimientos(); } catch (e) {}
+            try { renderAhorroAcumuladoWidget(); } catch (e) {}
+            const vis = function (id) { const el = document.getElementById(id); return !!(el && !el.classList.contains('hidden')); };
+            if (vis('vistaActividades')) { try { renderizarActividades(); } catch (e) {} try { renderizarKanban(); } catch (e) {} }
+            if (vis('vistaHistorial')) { try { cargarTablaHistorial(); } catch (e) {} }
+            if (vis('vistaAgenda') && typeof miCalendario !== 'undefined' && miCalendario) { try { miCalendario.refetchEvents(); } catch (e) {} }
+            if (vis('subVistaHistorico') && window.renderHistoriaCats) { try { window.renderHistoriaCats(); } catch (e) {} }
+        }
+
+        function syncRepintarEstado() {
+            const el = document.getElementById('syncEstadoTxt');
+            if (!el) return;
+            if (!supaCliente || !supaSesion || !supaSesion.user) { el.textContent = ''; return; }
+            let txt = '';
+            if (!syncUltimaSyncT) txt = ti('su.sync.nunca');
+            else txt = tiPlantilla('su.sync.hace', { n: Math.max(0, Math.round((Date.now() - syncUltimaSyncT) / 60000)) });
+            const sucias = Object.keys(syncSucia).filter(function (k) { return syncSucia[k]; }).length;
+            txt += ' · ' + tiPlantilla('su.sync.alDia', { n: SYNC_DEFS.length - sucias, t: SYNC_DEFS.length });
+            if (syncEscuchaEstado === 'on') txt += ' · ' + ti('su.sync.escucha');
+            else if (syncEscuchaEstado === 'off') txt += ' · ' + ti('su.sync.escuchaOff');
+            el.textContent = txt;
+        }
+
+        function syncArrancar() {
+            if (syncWire) return;
+            syncWire = true;
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'hidden') {
+                    if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; syncEmpujarSucias(); }   /* flush al ocultar la pestaña */
+                } else if (supaSesion && supaSesion.user) {
+                    syncBajarTodo();
+                    syncEscuchar(supaSesion.user.id);
+                }
+            });
+            window.addEventListener('online', function () { syncBajarTodo(); syncEmpujarSucias(); });   /* v0.59: bajar primero (LWW) y luego subir lo sucio */
+            if (syncPullTimer) clearInterval(syncPullTimer);
+            syncPullTimer = setInterval(function () {
+                if (supaSesion && supaSesion.user && syncAutoActivado() && document.visibilityState !== 'hidden') syncBajarTodo();
+            }, SYNC_PULL_MS);
+        }
+
+        /* Fase 2: Realtime de Supabase — el cambio del otro aparato llega en segundos.
+           El propio eco se ignora porque la fila coincide con syncUltimoEmpuje. */
+        function syncEscuchar(uid) {
+            if (!supaCliente || !uid) return;
+            if (syncCanalUid === String(uid) && syncCanal) return;
+            if (syncCanal) { try { supaCliente.removeChannel(syncCanal); } catch (e) {} syncCanal = null; }
+            syncCanalUid = String(uid);
+            try {
+                syncCanal = supaCliente.channel('maatly-datos-' + syncCanalUid.slice(0, 8))
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'datos', filter: 'user_id=eq.' + syncCanalUid }, function (payload) {
+                        const fila = (payload && payload.new) ? payload.new : null;
+                        if (fila && fila.coleccion) syncBajarColeccion(fila.coleccion, fila);
+                    })
+                    .subscribe(function (estado) {
+                        syncEscuchaEstado = (String(estado) === 'SUBSCRIBED') ? 'on' : 'off';
+                        syncRepintarEstado();
+                    });
+            } catch (e) { console.warn('[Sync] realtime:', e && e.message); }
+        }
+
+        async function syncAhora() {
+            triggerHaptic();
+            if (!supaCliente || !supaSesion || !supaSesion.user) { mostrarToast(ti('su.sinCfg'), 'error'); return; }
+            const b = document.getElementById('btnSyncAhora');
+            const bt = document.getElementById('btnSyncAhoraTxt');
+            if (b) b.disabled = true;
+            if (bt) bt.textContent = ti('su.sync.subiendo');
+            try {
+                await syncBajarTodo();   /* v0.59: bajar primero (LWW) — así el local viejo no pisa a la nube nueva */
+                await syncEmpujarSucias(true);
+            } finally {
+                if (b) b.disabled = false;
+                if (bt) bt.textContent = ti('su.sync.btnAhora');
+                syncRepintarEstado();
+            }
+        }
+
         function supaRenderPanel() {
             const cont = document.getElementById('cfgBodyCuenta');
             if (!cont) return;
@@ -13804,6 +14198,17 @@
                 html += '    <div id="snapListaBox" class="text-slate-500 dark:text-slate-400"><p class="text-xs">' + ti('su.snap.cargando') + '</p></div>';
                 html += '  </div>';
                 html += '</div>';
+                /* v0.59 · I4-lite: sincronización en vivo (misma sesión) */
+                html += '<div class="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3">';
+                html += '  <h4 class="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357 2m15.357-2H15"></path></svg>' + ti('su.sync.tit') + '</h4>';
+                html += '  <p class="text-xs text-slate-500 dark:text-slate-400">' + ti('su.sync.desc') + '</p>';
+                html += '  <p id="syncEstadoTxt" class="text-xs font-semibold text-indigo-700 dark:text-indigo-300">' + ti('su.sync.nunca') + '</p>';
+                html += '  <label class="flex items-start gap-2 cursor-pointer">';
+                html += '    <input type="checkbox" id="chkSyncAuto" class="mt-0.5 w-4 h-4 accent-indigo-600"' + (syncAutoActivado() ? ' checked' : '') + '>';
+                html += '    <span class="text-xs text-slate-600 dark:text-slate-300"><b class="font-bold">' + ti('su.sync.autoLbl') + '</b> · ' + ti('su.sync.autoDesc') + '</span>';
+                html += '  </label>';
+                html += '  <button id="btnSyncAhora" class="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 font-semibold rounded-lg text-xs transition-colors border border-indigo-100 dark:border-indigo-800/50 flex items-center gap-2"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357 2m15.357-2H15"></path></svg><span id="btnSyncAhoraTxt">' + ti('su.sync.btnAhora') + '</span></button>';
+                html += '</div>';
             }
             /* Sin sesión: botón al PORTAL de entrada (el botón de Google vive ahí — v0.57) */
             if (!user && !enFile) {
@@ -13851,6 +14256,15 @@
                 });
                 snapListaCargar();
             }
+            /* v0.59 · I4-lite: sync en vivo — interruptor + botón + estado */
+            const chkSyncAuto = document.getElementById('chkSyncAuto');
+            if (chkSyncAuto) chkSyncAuto.addEventListener('change', function () {
+                perfilSet({ syncAuto: chkSyncAuto.checked });
+                mostrarToast(ti(chkSyncAuto.checked ? 'su.sync.autoOn' : 'su.sync.autoOff'), chkSyncAuto.checked ? 'success' : 'info');
+            });
+            const btnSyncAhora = document.getElementById('btnSyncAhora');
+            if (btnSyncAhora) btnSyncAhora.addEventListener('click', syncAhora);
+            syncRepintarEstado();
         }
         i18nRefrescar(supaRenderPanel);   /* v0.56: el panel de la cuenta se repinta al cambiar el idioma */
 
