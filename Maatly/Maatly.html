@@ -2185,7 +2185,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.59';   /* v0.59: I4-lite sync en vivo (push/pull + merge + Realtime) · v0.58.1: sello de Netlify sobre la barra móvil · v0.58: I2b copias en la nube */
+        const VER_APP = 'v0.59.1';   /* v0.59.1: planesAhorro entra a la sync (15 colecciones) · v0.59: I4-lite sync en vivo (push/pull + merge + Realtime) · v0.58.1: sello de Netlify sobre la barra móvil · v0.58: I2b copias en la nube */
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -13809,6 +13809,7 @@
             { k: 'maatlyApartadosPozo', t: 'arr' },
             { k: 'maatlyMetasCumplidas', t: 'arr' },
             { k: 'maatlyArchivoMensual', t: 'arr' },
+            { k: 'planesAhorro', t: 'arr' },        /* v0.59.1: los planes de ahorro ya viajan (id 'pa-…'; merge por id) */
             { k: 'historialUltimate', t: 'arr' },   /* clave SIN prefijo: la Historia (id = fechaStr) */
             { k: 'maatlyIngresoHist', t: 'arr' },
             { k: 'kanbanActividades', t: 'arr' },
