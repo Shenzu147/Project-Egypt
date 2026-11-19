@@ -279,6 +279,10 @@
         .kanban-ghost { opacity: .4 !important; background: #c7d2fe !important; border: 2px dashed #6366f1 !important; }
         .kanban-chosen { box-shadow: 0 10px 22px -8px rgba(79,70,229,.5); }
         .kanban-ghost-col { opacity: .55; }
+        /* v0.67: mientras se arrastra se apaga el snap del carrusel (el snap peleaba con el
+           arrastre y movía la columna destino de debajo del dedo) */
+        body.kb-arrastrando .kanban-board { scroll-snap-type: none !important; }
+        body.kb-arrastrando .kanban-cards { overscroll-behavior: contain; }
         /* v0.25.32: papelera temática (tarjetas y columnas del tablero) — hover por token */
         .kb-del { color: #cbd5e1; border-radius: 6px; }
         .kb-del:hover { color: var(--c-alarma); background: var(--c-alarma-suave); }
@@ -347,6 +351,10 @@
         .m-toast-ico { width: 1.35rem; height: 1.35rem; border-radius: 9999px; display: grid; place-items: center; flex-shrink: 0; margin-top: 1px; }
         .m-toast-ico svg { width: 0.8rem; height: 0.8rem; }
         .m-toast-txt { overflow-wrap: anywhere; min-width: 0; }
+        /* v0.67: acción dentro del toast («Deshacer») — el botón vive en la misma tarjeta */
+        .m-toast-accion { margin-left: auto; flex-shrink: 0; align-self: center; font-size: 12px; font-weight: 800; color: #6366f1; background: #6366f11f; border: 1px solid #6366f140; border-radius: .6rem; padding: .25rem .6rem; transition: background .2s var(--m-ease); }
+        .m-toast-accion:hover { background: #6366f133; }
+        .dark .m-toast-accion { color: #a5b4fc; background: rgba(99,102,241,.18); border-color: rgba(165,180,252,.35); }
         .m-toast-ok { background: #ffffff; color: #334155; border: 1px solid #e2e8f0; }
         .m-toast-err { background: #ffffff; color: #7f1d1d; border: 1px solid #fecaca; }
         .m-toast-info { background: #ffffff; color: #334155; border: 1px solid #e2e8f0; }
@@ -628,9 +636,11 @@
             #listaActividadesWidget::-webkit-scrollbar { display: block !important; width: 8px; }
             #listaActividadesWidget > div { flex: 0 0 auto !important; width: 100% !important; scroll-snap-align: none !important; }
             #listaActividadesWidget > div > div:first-child p { -webkit-line-clamp: 3 !important; }
-            /* Tablero: columnas casi a todo el ancho, se deslizan una a una */
+            /* Tablero: columnas casi a todo el ancho, se deslizan una a una.
+               v0.67: 86vw → 78vw para que ASOME la columna siguiente (el destino visible
+               es la mitad del problema al arrastrar) */
             .kanban-board { scroll-snap-type: x mandatory; }
-            .kanban-col { width: 86vw !important; min-width: 86vw !important; scroll-snap-align: center; }
+            .kanban-col { width: 78vw !important; min-width: 78vw !important; scroll-snap-align: center; }
             /* (1) Calendario de mes: eventos como barras de color; el día abre su lista */
             .fc-dayGridMonth-view .fc-daygrid-event { font-size: 0 !important; height: 6px !important; min-height: 6px !important; padding: 0 !important; margin: 2px 2px 0 !important; border-radius: 3px; }
             .fc-dayGridMonth-view .fc-daygrid-event .fc-event-title,
@@ -1226,6 +1236,25 @@
     </div>
 
     <!-- Modal Avanzado de Evento / Tarea -->
+    <!-- v0.67: hoja «Mover a…» — mover tarjetas con un toque (camino principal en el móvil) -->
+    <div id="modalMoverTarjeta" class="fixed inset-0 bg-slate-900/50 z-[130] hidden flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0 p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto transform scale-95 transition-transform border border-slate-200 dark:border-slate-700 p-5">
+            <div class="flex items-center justify-between gap-2 mb-1">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 min-w-0">
+                    <svg class="w-5 h-5 flex-shrink-0 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                    <span data-i18n="kb.mover.tit">Mover a…</span>
+                </h3>
+                <button onclick="aaDlgCerrar('modalMoverTarjeta')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors p-1 flex-shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <p id="moverSub" class="text-xs text-slate-500 dark:text-slate-400 mb-3 truncate"></p>
+            <div id="moverLista" class="space-y-2"></div>
+            <div class="flex justify-end gap-3 mt-4">
+                <button id="moverPausar" onclick="kbHojaPausar()" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"></button>
+                <button onclick="aaDlgCerrar('modalMoverTarjeta')" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors" data-i18n="pa.btnCancelar">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Actividad (Kanban) -->
     <div id="modalActividad" class="fixed inset-0 bg-slate-900/50 z-[110] hidden flex items-center justify-center backdrop-blur-sm transition-opacity duration-300 opacity-0 p-4">
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-300 ease-out border border-slate-200 dark:border-slate-700">
@@ -1868,6 +1897,12 @@
                                 <button onclick="kanbanSetPeriodo('anio')" data-per="anio" class="kb-seg px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-400" data-i18n="cal.btn.anio">Año</button>
                                 <button onclick="kanbanSetPeriodo('todo')" data-per="todo" class="kb-seg px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 dark:text-slate-400" data-i18n="kb.seg.todo">Todo</button>
                             </div>
+                            <!-- v0.67: arrastre entre columnas como ATAJO (apagado por defecto en móvil) -->
+                            <button id="btnKbDrag" onclick="kbAlternarDrag()" aria-pressed="false" data-i18n-title="kb.board.dragTitle" title="Mover tarjetas arrastrándolas"
+                                class="kb-drag-btn px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all border border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-800 flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8H3m0 0l3-3M3 8l3 3M17 16h4m0 0l-3-3m3 3l-3 3M7 16H3m0 0l3-3m-3 3l3 3M17 8h4m0 0l-3-3m3 3l-3 3"></path></svg>
+                                <span data-i18n="kb.board.drag">Arrastrar</span>
+                            </button>
                         </div>
                     </div>
                     <div class="flex-1 overflow-hidden">
@@ -2375,7 +2410,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.66';   /* v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
+        const VER_APP = 'v0.67';   /* v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -2826,7 +2861,16 @@
                 pMsg.classList.remove('hidden');
                 inpt.classList.add('hidden');
                 pMsg.textContent = message;
-                document.getElementById('modalChkRow').classList.add('hidden');   /* v0.25.33: sin residuo de la modal anterior */
+                /* v0.67: el checkbox también puede vivir en una modal SIN input («no volver a
+                   preguntar»); antes solo se mostraba en las de texto y se ocultaba aquí a ciegas */
+                const chkRow2 = document.getElementById('modalChkRow');
+                if (chk) {
+                    chkRow2.classList.remove('hidden'); chkRow2.classList.add('flex');
+                    document.getElementById('modalChk').checked = chk.checked === true;
+                    document.getElementById('modalChkLbl').textContent = chk.label || '';
+                } else {
+                    chkRow2.classList.add('hidden'); chkRow2.classList.remove('flex');   /* v0.25.33: sin residuo de la modal anterior */
+                }
             }
 
             const btnConfirm = document.getElementById('btnModalConfirm');
@@ -2856,7 +2900,7 @@
             };
         }
 
-        function mostrarToast(msg, tipo = 'success') {
+        function mostrarToast(msg, tipo = 'success', accion = null) {   /* v0.67: accion = {txt, fn} → botón «Deshacer» dentro del toast (vida 6 s) */
             const container = document.getElementById('toastContainer'); const toast = document.createElement('div');
             /* v0.25.17 «snackbar fintech»: tarjeta de la app + chip de ícono SVG por tipo (verde/rojo/índigo)
                en vez del prefijo; clase .m-toast propia para que el gradiente de gemini no la disfrazé. */
@@ -2868,14 +2912,27 @@
                     ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 16h-1v-4h1m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
                     : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>');
             toast.className = 'm-toast ' + (esErr ? 'm-toast-err' : (esInfo ? 'm-toast-info' : 'm-toast-ok'));
-            toast.innerHTML = '<span class="m-toast-ico" style="background:' + col + '26;color:' + col + '"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' + ico + '</svg></span><span class="m-toast-txt">' + msg + '</span>';
+            toast.innerHTML = '<span class="m-toast-ico" style="background:' + col + '26;color:' + col + '"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">' + ico + '</svg></span><span class="m-toast-txt">' + msg + '</span>' + (accion ? '<button type="button" class="m-toast-accion"></button>' : '');
             if (window.innerWidth < 640) while (container.children.length >= 3) container.removeChild(container.firstElementChild); // v0.18: tope de 3 toasts en móvil
             container.appendChild(toast);
             /* v0.25.18: toasts abajo-derecha (escritorio) / snackbar abajo-centrado (móvil) —
                TODOS entran/salen en vertical, sin diagonal (el escritorio ya no está arriba). */
             toast.style.transform = 'translateY(12px)';
             requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'none'; });
-            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(12px)'; setTimeout(() => toast.remove(), 300); }, 3000);
+            const cerrar = () => { toast.style.opacity = '0'; toast.style.transform = 'translateY(12px)'; setTimeout(() => toast.remove(), 300); };
+            const tCierre = setTimeout(cerrar, accion ? 6000 : 3000);   /* v0.67: con acción, el doble de tiempo */
+            if (accion) {
+                const btn = toast.querySelector('.m-toast-accion');
+                if (btn) {
+                    btn.textContent = accion.txt || '';
+                    btn.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        clearTimeout(tCierre);
+                        cerrar();
+                        try { accion.fn(); } catch (eAcc) { console.warn('[Toast] acción falló', eAcc); }
+                    });
+                }
+            }
         }
 
         const htmlElement = document.documentElement;
@@ -4951,12 +5008,31 @@
                 'kb.orden.estado': 'Estado',
                 /* v0.52 · I1+6 — board kanban, modal de actividad y chips de estado */
                 'kb.board.tit': 'Tablero de actividades',
-                'kb.board.intro': 'Arrastra las tarjetas entre columnas. Toca un nombre para cambiarlo, el punto de color para cambiar el color y la papelera para borrar. La columna marcada como Cierre anota los gastos cuando una tarjeta llega ahí.',
+                'kb.board.intro': 'Toca el estado de una tarjeta para moverla («Mover a…»). También puedes arrastrar entre columnas si activas «Arrastrar». Toca un nombre para cambiarlo, el punto de color para cambiar el color y la papelera para borrar. La columna marcada como Cierre anota los gastos cuando una tarjeta llega ahí, y antes te avisa.',
                 'kb.board.prev': 'Período anterior',
                 'kb.board.hoy': 'Volver a hoy',
                 'kb.board.next': 'Período siguiente',
                 'kb.board.hoyPrefijo': 'Hoy · ',
                 'kb.seg.todo': 'Todo',
+                /* v0.67 — mover tarjetas con el dedo: hoja «Mover a…», aviso de Cierre y deshacer */
+                'kb.mover.tit': 'Mover a…',
+                'kb.mover.sub': 'Toca el estado destino de «{t}»',
+                'kb.mover.aqui': 'Estás aquí',
+                'kb.mover.pausar': 'Pausar tarjeta',
+                'kb.mover.reactivar': 'Reactivar tarjeta',
+                'kb.mover.vacio': 'Este tablero no tiene estados todavía',
+                'kb.mover.title': 'Mover a otro estado',
+                'kb.mover.aria': 'Mover a {e}',
+                'kb.cierre.tit': 'Llega a la columna de Cierre',
+                'kb.cierre.body': '«{t}» registra {m} en tus números cuando llega aquí. ¿Mover la tarjeta?',
+                'kb.cierre.btn': 'Sí, mover y registrar',
+                'kb.cierre.novolver': 'No volver a preguntar',
+                'kb.undo': 'Deshacer',
+                'kb.toast.undoOk': 'Movimiento deshecho',
+                'kb.board.drag': 'Arrastrar',
+                'kb.board.dragTitle': 'Arrastrar tarjetas entre columnas (opcional; en el móvil está apagado por defecto)',
+                'kb.toast.dragOn': 'Arrastre entre columnas: activado',
+                'kb.toast.dragOff': 'Arrastre entre columnas: apagado — usa «Mover a…» en cada tarjeta',
                 'kb.badge.pausaTitle': 'En pausa — gris y sin aviso',
                 'kb.badge.pausada': 'Pausada',
                 'kb.badge.sinFecha': 'sin fecha',
@@ -5985,12 +6061,31 @@
                 'kb.orden.estado': 'Status',
                 /* v0.52 · I1+6 — kanban board, activity modal and status chips */
                 'kb.board.tit': 'Activities board',
-                'kb.board.intro': 'Drag the cards between columns. Tap a name to change it, the color dot to change the color and the trash can to delete. The column marked as Closing logs expenses when a card reaches it.',
+                'kb.board.intro': 'Tap the status on a card to move it ("Move to…"). You can also drag between columns if you turn on "Drag". Tap a name to change it, the color dot to change the color and the trash can to delete. The column marked as Closing logs expenses when a card reaches it, and asks you first.',
                 'kb.board.prev': 'Previous period',
                 'kb.board.hoy': 'Back to today',
                 'kb.board.next': 'Next period',
                 'kb.board.hoyPrefijo': 'Today · ',
                 'kb.seg.todo': 'All',
+                /* v0.67 — move cards by tapping: "Move to…" sheet, closing notice and undo */
+                'kb.mover.tit': 'Move to…',
+                'kb.mover.sub': 'Tap the destination status for "{t}"',
+                'kb.mover.aqui': 'You are here',
+                'kb.mover.pausar': 'Pause card',
+                'kb.mover.reactivar': 'Resume card',
+                'kb.mover.vacio': 'This board has no statuses yet',
+                'kb.mover.title': 'Move to another status',
+                'kb.mover.aria': 'Move to {e}',
+                'kb.cierre.tit': 'Landing in the Closing column',
+                'kb.cierre.body': '"{t}" logs {m} into your numbers when it lands here. Move the card?',
+                'kb.cierre.btn': 'Yes, move and log it',
+                'kb.cierre.novolver': "Don't ask again",
+                'kb.undo': 'Undo',
+                'kb.toast.undoOk': 'Move undone',
+                'kb.board.drag': 'Drag',
+                'kb.board.dragTitle': 'Drag cards between columns (optional; off by default on mobile)',
+                'kb.toast.dragOn': 'Drag between columns: on',
+                'kb.toast.dragOff': 'Drag between columns: off — use "Move to…" on each card',
                 'kb.badge.pausaTitle': 'On pause — gray and silent',
                 'kb.badge.pausada': 'Paused',
                 'kb.badge.sinFecha': 'no date',
@@ -8724,7 +8819,7 @@
             }
             acTarget = null;
             aaDlgCerrar('modalAsignarCat');
-            mostrarToast('Categoría asignada: ' + (acSel || 'Sin categoría'), 'success');
+            mostrarToast('Categoría asignada: ' + (acSel || ti('cal.chip.catSin')), 'success');
             const det = document.getElementById('modalDetalleMes');
             if (dmMesActual && det && !det.classList.contains('hidden')) abrirDetalleMes(dmMesActual); /* re-pinta el Detalle si está abierto */
             if (t.scope === 'arch' && (typeof subTabInicioActual !== 'undefined') && subTabInicioActual === 'historico') {
@@ -9264,18 +9359,11 @@
         let miCalendario;
 
         /* ---------- Widget "Actividades" del Panel de Inicio (fuente única: kanban) ---------- */
+        /* v0.67: el widget del panel y la hoja «Mover a…» pasan por la MISMA función que el
+           tablero — confirmación de Cierre, reactivación, deshacer y refresco en un solo sitio */
         window.kbWidgetEstado = (id, estadoId) => {
             triggerHaptic();
-            const a = kbGetActividades().find(x => x.id === id);
-            if (!a) return;
-            const origen = a.estadoId;
-            a.estadoId = estadoId;
-            if (a.pausada && origen !== estadoId) { a.pausada = false; mostrarToast(ti('kb.toastReactivada'), 'info'); }   /* v0.25.35: cambiar de columna la reactiva */
-            kbGuardarActividades();
-            const estObj = kbGetEstados().find(e => e.id === estadoId);
-            if (estObj) kbAlCompletar(a, estObj, origen); // v0.10: completar desde el widget también registra/recurre
-            refrescarVistasActividad();
-            mostrarToast(ti('kb.toastEstado'), 'info');
+            kbMoverTarjeta(id, estadoId);
         };
 
         window.kbWidgetEliminar = (id) => {
@@ -9982,6 +10070,193 @@
             return '<span class="text-xs font-extrabold px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300" title="' + ti('kb.badge.recTitle') + '"><svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 1l4 4-4 4M3 11v-1a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v1a4 4 0 01-4 4H3"/></svg> ' + txt + '</span>';
         }
 
+        /* ==================================================================
+           v0.67 — MOVER TARJETAS CON EL DEDO
+           En el móvil arrastrar entre columnas era impreciso: el tablero es un
+           carrusel con snap, la columna destino casi nunca está a la vista, el
+           scroll interno de cada columna roba el gesto… y soltar en «Cierre»
+           registraba dinero sin avisar. Ahora el camino principal es un toque
+           (la pill de estado abre la hoja «Mover a…») y el arrastre queda como
+           atajo opcional, apagado por defecto en el móvil.
+           ================================================================== */
+        var kbHojaActId = null;
+
+        function kbEsMovil() { try { return !!window.matchMedia('(max-width: 767.98px)').matches; } catch (e) { return false; } }
+
+        function kbDragMovilActivo() { try { return localStorage.getItem('maatlyKbDragMovil') === '1'; } catch (e) { return false; } }
+
+        function kbCierrePreguntar() { try { return localStorage.getItem('maatlyKbCierrePreguntar') !== '0'; } catch (e) { return true; } }
+
+        /* ¿Es la columna de Cierre y esta tarjeta aún no había registrado su dinero? */
+        function kbCierrePendiente(act, destino) {
+            if (!act || !destino || !destino.esCierre || act.registrado) return false;
+            return Number(act.monto) > 0;
+        }
+
+        function kbTomarSnapshot(act) {
+            return {
+                estadoId: act.estadoId, orden: act.orden, pausada: act.pausada,
+                nMov: getMovimientos().length,
+                nAct: (kanbanActividades || kbGetActividades()).length
+            };
+        }
+
+        function kbRestaurarSnapshot(act, snap) {
+            act.estadoId = snap.estadoId;
+            act.orden = snap.orden;
+            act.pausada = snap.pausada;
+            kbGuardarActividades();
+            refrescarVistasActividad();
+            mostrarToast(ti('kb.toast.undoOk'), 'info');
+        }
+
+        /* La tarjeta queda en la posición que soltó el dedo (las demás bajan una) */
+        function kbInsertarEnColumna(act, idx) {
+            const resto = (kanbanActividades || []).filter(function(x) { return x.estadoId === act.estadoId && x.id !== act.id; })
+                .sort(function(a, b) { return (a.orden || 0) - (b.orden || 0); });
+            act.orden = idx;
+            resto.forEach(function(x, i) { x.orden = (i >= idx) ? i + 1 : i; });
+        }
+
+        /* Mueve una tarjeta a otro estado. `idx` = posición dentro de la columna destino
+           (la del arrastre). Devuelve true | 'pendiente' (está preguntando) | false. */
+        function kbMoverTarjeta(id, estadoId, idx) {
+            const act = (kanbanActividades || kbGetActividades()).find(function(x) { return x.id === id; });
+            const estados = kbGetEstados();
+            const destino = estados.find(function(e) { return e.id === estadoId; });
+            if (!act || !destino || act.estadoId === estadoId) return false;
+            const origen = act.estadoId;
+
+            /* v0.67 (decisión del usuario): llegar a «Cierre» registra dinero real, así que
+               se avisa ANTES — con «no volver a preguntar» para no repetirlo. */
+            if (kbCierrePendiente(act, destino) && kbCierrePreguntar()) {
+                const snapC = kbTomarSnapshot(act);
+                showModal(
+                    '<svg class="w-5 h-5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>' + ti('kb.cierre.tit'),
+                    tiPlantilla('kb.cierre.body', { t: act.titulo, m: mFmt(act.monto) }),
+                    ti('kb.cierre.btn'), 'bg-indigo-600 hover:bg-indigo-700',
+                    function(val, chkV) {
+                        if (chkV === true) { try { localStorage.setItem('maatlyKbCierrePreguntar', '0'); } catch (eNo) {} }
+                        kbAplicarMovimiento(act, destino, origen, snapC, idx);
+                    },
+                    false, '', '', { label: ti('kb.cierre.novolver'), checked: false },
+                    function() { /* cancelar: el modelo no se tocó (el tablero ya se re-renderizó) */ }
+                );
+                return 'pendiente';
+            }
+            return kbAplicarMovimiento(act, destino, origen, kbTomarSnapshot(act), idx);
+        }
+
+        function kbAplicarMovimiento(act, destino, origen, snap, idx) {
+            act.estadoId = destino.id;
+            if (typeof idx === 'number' && idx >= 0) kbInsertarEnColumna(act, idx);
+            let reactivada = false;
+            if (act.pausada && origen !== destino.id) { act.pausada = false; reactivada = true; }   /* v0.25.35: mover reactiva */
+            kbGuardarActividades();
+            if (reactivada) mostrarToast(ti('kb.toastReactivada'), 'info');
+            kbAlCompletar(act, destino, origen);
+            refrescarVistasActividad();
+            /* Deshacer SOLO si la operación no creó dinero ni tarjetas nuevas: revertir en
+               silencio un gasto ya anotado sería inventar un borrado de dinero. */
+            const puede = getMovimientos().length === snap.nMov && (kanbanActividades || kbGetActividades()).length === snap.nAct;
+            mostrarToast(tiPlantilla('kb.toast.movida', { c: destino.nombre }), 'info',
+                puede ? { txt: ti('kb.undo'), fn: function() { kbRestaurarSnapshot(act, snap); } } : null);
+            return true;
+        }
+
+        /* ---------- Hoja «Mover a…» ---------- */
+        function kbHojaMover(id) {
+            const act = (kanbanActividades || kbGetActividades()).find(function(x) { return x.id === id; });
+            if (!act) return;
+            kbHojaActId = id;
+            const estados = kbGetEstados();
+            const sub = document.getElementById('moverSub');
+            if (sub) sub.textContent = tiPlantilla('kb.mover.sub', { t: act.titulo });
+            const cont = document.getElementById('moverLista');
+            if (cont) {
+                if (!estados.length) {
+                    cont.innerHTML = '<p class="text-xs text-slate-400 dark:text-slate-500 text-center py-4">' + ti('kb.mover.vacio') + '</p>';
+                } else {
+                    cont.innerHTML = estados.map(function(e) {
+                        const aqui = e.id === act.estadoId;
+                        return '<button type="button" ' + (aqui ? 'disabled' : '') + ' onclick="kbHojaElegir(\'' + act.id + '\', \'' + e.id + '\')" ' +
+                            'class="w-full flex items-center gap-2.5 px-3 py-3 rounded-xl border text-left transition-colors ' +
+                            (aqui
+                                ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/40 cursor-default'
+                                : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-white dark:hover:bg-slate-800') + '">' +
+                            '<span class="w-3 h-3 rounded-full flex-shrink-0" style="background:' + e.color + '"></span>' +
+                            '<span class="flex-1 min-w-0 text-sm font-bold text-slate-700 dark:text-slate-200 truncate">' + kbEscape(e.nombre) + '</span>' +
+                            (e.esCierre ? '<span class="kb-chip-cierre flex-shrink-0">' + ti('kb.col.cierre') + '</span>' : '') +
+                            (aqui
+                                ? '<span class="text-[11px] font-extrabold text-indigo-600 dark:text-indigo-400 flex-shrink-0">' + ti('kb.mover.aqui') + '</span>'
+                                : '<svg class="w-4 h-4 flex-shrink-0 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>') +
+                            '</button>';
+                    }).join('');
+                }
+            }
+            const btnP = document.getElementById('moverPausar');
+            if (btnP) btnP.textContent = act.pausada ? ti('kb.mover.reactivar') : ti('kb.mover.pausar');
+            aaDlgAbrir('modalMoverTarjeta');
+        }
+
+        function kbHojaElegir(id, estadoId) {
+            aaDlgCerrar('modalMoverTarjeta');
+            setTimeout(function() { kbMoverTarjeta(id, estadoId); }, 60);   /* deja terminar el cierre de la hoja */
+        }
+
+        function kbHojaPausar() {
+            const act = (kanbanActividades || kbGetActividades()).find(function(x) { return x.id === kbHojaActId; });
+            aaDlgCerrar('modalMoverTarjeta');
+            if (!act) return;
+            act.pausada = !act.pausada;
+            kbGuardarActividades();
+            refrescarVistasActividad();
+            mostrarToast(act.pausada ? ti('kb.badge.pausada') : ti('kb.toastReactivada'), 'info');
+        }
+
+        /* ---------- Pill de estado (el botón de mover de cada tarjeta) ---------- */
+        function kbPillEstadoHTML(act) {
+            const estados = kbGetEstados();
+            const est = estados.find(function(e) { return e.id === act.estadoId; }) || estados[0];
+            if (!est) return '';
+            return '<button type="button" class="kb-pill-estado inline-flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full border text-[11px] font-extrabold transition-colors ' +
+                'bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:border-indigo-400 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400" ' +
+                'style="border-color:' + est.color + '55" ' +
+                'onclick="event.stopPropagation(); kbHojaMover(\'' + act.id + '\')" ' +
+                'title="' + kbEscape(ti('kb.mover.title')) + '" aria-label="' + kbEscape(tiPlantilla('kb.mover.aria', { e: est.nombre })) + '">' +
+                '<span class="w-2 h-2 rounded-full flex-shrink-0" style="background:' + est.color + '"></span>' +
+                '<span class="truncate max-w-[6.5rem]">' + kbEscape(est.nombre) + '</span>' +
+                '<svg class="w-3 h-3 flex-shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>' +
+                '</button>';
+        }
+
+        /* ---------- Arrastre como atajo ---------- */
+        function kbPintarDragBtn() {
+            const b = document.getElementById('btnKbDrag');
+            if (!b) return;
+            const movil = kbEsMovil();
+            b.style.display = movil ? '' : 'none';   /* en PC el arrastre siempre estuvo activo: el atajo es cosa del móvil */
+            const on = kbDragMovilActivo();
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            b.classList.toggle('text-indigo-600', on);
+            b.classList.toggle('dark:text-indigo-400', on);
+            b.classList.toggle('border-indigo-300', on);
+            b.classList.toggle('dark:border-indigo-600', on);
+            b.classList.toggle('bg-indigo-50', on);
+            b.classList.toggle('dark:bg-indigo-500/15', on);
+            b.classList.toggle('text-slate-400', !on);
+            b.classList.toggle('dark:text-slate-500', !on);
+        }
+
+        function kbAlternarDrag() {
+            const nuevo = !kbDragMovilActivo();
+            try { localStorage.setItem('maatlyKbDragMovil', nuevo ? '1' : '0'); } catch (eSet) {}
+            triggerHaptic();
+            kbPintarDragBtn();
+            renderizarKanban();
+            mostrarToast(ti(nuevo ? 'kb.toast.dragOn' : 'kb.toast.dragOff'), 'info');
+        }
+
         function kanbanTarjetaHTML(act) {
             const tipo = kbTipoDe(act);
             return '<div class="kanban-card bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-600 cursor-pointer transition-all' + (act.pausada ? ' kb-pausada' : '') + '" data-id="' + act.id + '" onclick="abrirModalActividad(\'' + act.id + '\')">' +
@@ -9993,7 +10268,7 @@
                     '</button>' +
                 '</div>' +
                 (act.notas ? '<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">' + kbEscape(act.notas) + '</p>' : '') +
-                '<div class="flex items-center gap-1.5 mt-2 flex-wrap">' + kbBadgePausadaHTML(act) + kbBadgeFechaHTML(act) + kbBadgeMontoHTML(act) + kbBadgeRecurrenciaHTML(act) + '</div>' +
+                '<div class="flex items-center gap-1.5 mt-2 flex-wrap">' + kbPillEstadoHTML(act) + kbBadgePausadaHTML(act) + kbBadgeFechaHTML(act) + kbBadgeMontoHTML(act) + kbBadgeRecurrenciaHTML(act) + '</div>' +
                 '</div>';
         }
 
@@ -10048,21 +10323,40 @@
             });
             actualizarConteosKanban();
             actualizarSegmentosKanban();
+            kbPintarDragBtn();   /* v0.67: el botón «Arrastrar» refleja el ajuste y solo se ve en móvil */
             kbInicializarSortables();
         }
 
-        /* ---------- Drag & drop (SortableJS, ya cargado en la app) ---------- */
+        /* ---------- Drag & drop (SortableJS, ya cargado en la app) ----------
+           v0.67: en móvil el salto entre columnas está APAGADO por defecto (se activa con
+           el botón «Arrastrar» de la barra); el arrastre dentro de la columna siempre
+           funciona. Ajustes: clon propio en móvil (forceFallback) para que no pelee con
+           el scroll/snap del carrusel, auto-scroll del contenedor, umbral corto y
+           `preventOnFilter` apagado para que la pill y la X sigan siendo tocables. */
         function kbInicializarSortables() {
             const board = document.getElementById('kanbanBoard');
             if (!board || typeof Sortable === 'undefined') return;
+            const movil = kbEsMovil();
+            const cruzar = !movil || kbDragMovilActivo();
             board.querySelectorAll('.kanban-cards').forEach(function(col) {
                 kbSortables.push(new Sortable(col, {
-                    group: 'kanban-tarjetas',
+                    group: { name: 'kanban-tarjetas', pull: cruzar, put: cruzar },
                     animation: 150,
                     ghostClass: 'kanban-ghost',
                     chosenClass: 'kanban-chosen',
                     delayOnTouchOnly: true,
-                    delay: 180,
+                    delay: 120,
+                    touchStartThreshold: 4,
+                    fallbackTolerance: 4,
+                    forceFallback: movil,
+                    fallbackOnBody: movil,
+                    scroll: true,
+                    scrollSensitivity: 90,
+                    scrollSpeed: 12,
+                    bubbleScroll: true,
+                    preventOnFilter: false,
+                    filter: '.kb-pill-estado, .kb-del, .kb-dot, .kb-count',
+                    onStart: kbDragInicio,
                     onEnd: kbOnTarjetaSoltada
                 }));
             });
@@ -10073,11 +10367,17 @@
                 ghostClass: 'kanban-ghost-col',
                 delayOnTouchOnly: true,
                 delay: 180,
+                onStart: kbDragInicio,
                 onEnd: kbOnColumnaSoltada
             }));
         }
 
-        function kbOnTarjetaSoltada(evt) {
+        function kbDragInicio() {
+            document.body.classList.add('kb-arrastrando');   /* v0.67: apaga el snap del carrusel mientras se arrastra */
+            triggerHaptic();
+        }
+
+        function kbOrdenDesdeDOM() {
             document.querySelectorAll('#kanbanBoard .kanban-cards').forEach(function(cont) {
                 const estId = cont.dataset.estadoId;
                 cont.querySelectorAll('.kanban-card').forEach(function(el, idx) {
@@ -10087,19 +10387,44 @@
             });
             kbGuardarActividades();
             actualizarConteosKanban();
-            triggerHaptic();
-            if (evt.from !== evt.to) {
-                const est = kbGetEstados().find(function(e) { return e.id === evt.to.dataset.estadoId; });
-                mostrarToast(tiPlantilla('kb.toast.movida', { c: est ? est.nombre : ti('kb.toast.colFallback') }), 'info');
-                // v0.10: llegar a la última columna -> registrar movimiento y/o crear la recurrencia
-                const movida = (kanbanActividades || []).find(function(x) { return evt.item && x.id === evt.item.dataset.id; });
-                if (movida) kbAlCompletar(movida, est, evt.from.dataset.estadoId);
-                /* v0.25.35: arrastrarla a OTRA columna la reactiva (sale de la pausa) */
-                if (movida && movida.pausada) { movida.pausada = false; kbGuardarActividades(); refrescarVistasActividad(); mostrarToast(ti('kb.toastReactivada'), 'info'); }
+        }
+
+        function kbOnTarjetaSoltada(evt) {
+            document.body.classList.remove('kb-arrastrando');
+            const el = evt.item;
+            const act = el && el.dataset ? (kanbanActividades || kbGetActividades()).find(function(x) { return x.id === el.dataset.id; }) : null;
+            const nuevo = evt.to && evt.to.dataset ? evt.to.dataset.estadoId : null;
+            const viejo = evt.from && evt.from.dataset ? evt.from.dataset.estadoId : null;
+
+            if (!act || !nuevo) { kbOrdenDesdeDOM(); return; }
+
+            if (nuevo === viejo) {   /* solo reordenó dentro de la misma columna */
+                kbOrdenDesdeDOM();
+                triggerHaptic();
+                return;
             }
+
+            /* Cambió de columna: la decisión (confirmación de Cierre + deshacer) vive en
+               kbMoverTarjeta. Sortable YA movió el DOM, así que el modelo vuelve a su
+               estado previo y, si el usuario cancela, el tablero se re-renderiza desde
+               el modelo (el DOM «rebota» a su sitio original). */
+            const snap = kbTomarSnapshot(act);
+            let idx = -1;
+            if (evt.to) {
+                const hijos = Array.prototype.slice.call(evt.to.children).filter(function(c) { return c.classList && c.classList.contains('kanban-card'); });
+                idx = Math.max(0, hijos.indexOf(el));
+            }
+            act.estadoId = snap.estadoId;
+            act.orden = snap.orden;
+
+            const res = kbMoverTarjeta(act.id, nuevo, idx);
+            if (res === 'pendiente') { renderizarKanban(); return; }   /* canceló la confirmación */
+            if (res === false) { kbOrdenDesdeDOM(); }
+            triggerHaptic();
         }
 
         function kbOnColumnaSoltada() {
+            document.body.classList.remove('kb-arrastrando');
             const board = document.getElementById('kanbanBoard');
             if (!board) return;
             const ids = Array.from(board.querySelectorAll('.kanban-col')).map(function(el) { return el.dataset.estadoId; });
