@@ -329,6 +329,29 @@
         #listaMovimientosWidget > div:nth-child(4), #listaActividadesWidget > div:nth-child(4), #listaPlanesAhorroWidget > div:nth-child(4) { animation-delay: 100ms; }
         #listaMovimientosWidget > div:nth-child(n+5), #listaActividadesWidget > div:nth-child(n+5), #listaPlanesAhorroWidget > div:nth-child(n+5) { animation-delay: 120ms; }
         #listaMovimientosWidget, #listaPlanesAhorroWidget, #listaActividadesWidget, #listaAhorroAcumuladoWidget { scroll-behavior: smooth; }
+        /* ===== v0.60 «Barra visible» =====
+           Las listas del panel SÍ scrolleaban en escritorio (overflow-y:auto + la cadena de altura del
+           medidor), pero heredaban la barra global de 6px en #cbd5e1: sobre tarjeta blanca era invisible.
+           Barra propia para las listas: 8px, más contraste, hover, carril estable (el texto no salta al
+           aparecer) y los equivalentes estándar (Firefox) de scrollbar-width/color. */
+        #listaMovimientosWidget, #listaPlanesAhorroWidget, #listaActividadesWidget,
+        #listaAhorroAcumuladoWidget, #listaAdjuntosNotas { scrollbar-width: thin; scrollbar-color: #94a3b8 transparent; }
+        #listaMovimientosWidget::-webkit-scrollbar, #listaPlanesAhorroWidget::-webkit-scrollbar,
+        #listaActividadesWidget::-webkit-scrollbar, #listaAhorroAcumuladoWidget::-webkit-scrollbar,
+        #listaAdjuntosNotas::-webkit-scrollbar { width: 8px; }
+        #listaMovimientosWidget::-webkit-scrollbar-thumb, #listaPlanesAhorroWidget::-webkit-scrollbar-thumb,
+        #listaActividadesWidget::-webkit-scrollbar-thumb, #listaAhorroAcumuladoWidget::-webkit-scrollbar-thumb,
+        #listaAdjuntosNotas::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
+        #listaMovimientosWidget::-webkit-scrollbar-thumb:hover, #listaPlanesAhorroWidget::-webkit-scrollbar-thumb:hover,
+        #listaActividadesWidget::-webkit-scrollbar-thumb:hover, #listaAhorroAcumuladoWidget::-webkit-scrollbar-thumb:hover,
+        #listaAdjuntosNotas::-webkit-scrollbar-thumb:hover { background-color: #64748b; }
+        html.dark #listaMovimientosWidget::-webkit-scrollbar-thumb, html.dark #listaPlanesAhorroWidget::-webkit-scrollbar-thumb,
+        html.dark #listaActividadesWidget::-webkit-scrollbar-thumb, html.dark #listaAhorroAcumuladoWidget::-webkit-scrollbar-thumb,
+        html.dark #listaAdjuntosNotas::-webkit-scrollbar-thumb { background-color: #64748b; }
+        @media (min-width: 768px) {
+            /* carril reservado: al aparecer/desaparecer la barra el contenido no se refluye */
+            #listaMovimientosWidget, #listaPlanesAhorroWidget, #listaActividadesWidget, #listaAhorroAcumuladoWidget { scrollbar-gutter: stable; }
+        }
         /* el texto se adapta al tamaño del widget */
         .kpi-num { transition: font-size .35s var(--m-ease); }
         .widget[data-span="2"] .kpi-num { font-size: 2.5rem; }
@@ -358,10 +381,17 @@
            GridStack pasa a 1 columna en ≤767px y las alturas las gobierna ÉL (height inline por celda) +
            gsAjustarAlturas con el medidor interno de contenido. v0.19 ponía `.widget { height:auto !important }`
            para el layout flex pre-GridStack: tras v0.22 ese !important MATABA el height inline del motor
-           (items a 0px y contenido fileteado) — retirado; las listas siguen expandiéndose sin scroll interno. */
+           (items a 0px y contenido fileteado) — retirado. */
         @media (max-width: 767.98px) {
+            /* ===== v0.60 «Nada se recorta» =====
+               v0.25.16 dejaba estas listas con `overflow: visible !important; max-height: none !important`:
+               la tarjeta se medía UNA vez al arrancar y, al añadir registros después, el contenido
+               desbordaba la celda (cc es overflow:hidden) → filas cortadas y sin barra. Ahora la lista
+               crece con el contenido hasta un TOPE cómodo y, pasado el tope, scrollea DENTRO de la
+               tarjeta con barra fina visible. La medición se rehace en cada render con gsVigilarInicio. */
             #listaMovimientosWidget, #listaPlanesAhorroWidget,
-            #listaAdjuntosNotas, #listaAhorroAcumuladoWidget { overflow: visible !important; max-height: none !important; }
+            #listaAhorroAcumuladoWidget { overflow-y: auto !important; max-height: min(52vh, 24rem) !important; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+            #listaAdjuntosNotas { overflow-y: auto !important; max-height: 10rem !important; overscroll-behavior: contain; }
             #txtNotas { min-height: 9rem; }
             /* ===== v0.25.17 «Carrusel + snackbars» =====
                (1) El widget Actividades pasa a TARJETAS EN CARRUSEL horizontal (scroll-snap) — widget
@@ -556,7 +586,10 @@
         /* ===== v0.28 · Móvil: lectura y toque =====
            (2) Actividades en lista vertical (no carrusel) con título completo */
         @media (max-width: 767.98px) {
-            #listaActividadesWidget { flex-direction: column !important; flex-wrap: nowrap !important; overflow-x: hidden !important; overflow-y: auto !important; scroll-snap-type: none !important; gap: .5rem !important; }
+            /* v0.60: la lista vertical de Actividades gana tope + barra visible (el carrusel de v0.25.17
+               le había dejado scrollbar-width:none: scrolleaba sin que se viera cómo) */
+            #listaActividadesWidget { flex-direction: column !important; flex-wrap: nowrap !important; overflow-x: hidden !important; overflow-y: auto !important; scroll-snap-type: none !important; gap: .5rem !important; max-height: min(52vh, 24rem) !important; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: thin !important; }
+            #listaActividadesWidget::-webkit-scrollbar { display: block !important; width: 8px; }
             #listaActividadesWidget > div { flex: 0 0 auto !important; width: 100% !important; scroll-snap-align: none !important; }
             #listaActividadesWidget > div > div:first-child p { -webkit-line-clamp: 3 !important; }
             /* Tablero: columnas casi a todo el ancho, se deslizan una a una */
@@ -572,8 +605,11 @@
             .widget .text-sm, #panelCalendario .text-sm { font-size: 15px !important; }
             .widget h3 { font-size: 15px; }
             .kcal-dow { font-size: 11px !important; }
+            /* v0.61: el área táctil se conserva con un ::after INVISIBLE (44px), no con min-width —
+               los 40px de ancho se comían el título en pantallas de 320-360px */
             #listaActividadesWidget button, #listaMovimientosWidget button, #panelCalendario button,
-            .kanban-col button, #btnKbPrev, #btnKbNext, #btnKbHoy { min-height: 40px; min-width: 40px; }
+            .kanban-col button, #btnKbPrev, #btnKbNext, #btnKbHoy { min-height: 40px; min-width: 30px; position: relative; }
+            #listaActividadesWidget button::after, #listaMovimientosWidget button::after { content: ''; position: absolute; inset: -4px; }
         }
 
         /* ===== v0.29 · Móvil: marcas del calendario, intro oculta, gráficas más altas ===== */
@@ -624,6 +660,76 @@
             /* Hueco central: se abre cuando aparece Crear y se cierra cuando se oculta */
             .mobile-bottom-nav > div[aria-hidden] { flex: 0 0 3.5rem; width: auto; transition: flex-basis .32s cubic-bezier(.2, .8, .2, 1); }
             .mobile-bottom-nav.nav-sin-fab > div[aria-hidden] { flex-basis: 0; }
+        }
+        /* ===== v0.61 «Se ve bien en cualquier pantalla» =====
+           El problema NO es el viewport sino el ANCHO DE LA TARJETA: un widget de 1 de 3 columnas en
+           escritorio mide lo mismo que uno de móvil. Por eso las reglas finas van en CONTAINER QUERIES
+           sobre el medidor de cada tarjeta (container-type: inline-size), no en @media.
+           - Las cifras KPI escalan con el ancho (30px → 18px) y usan tabular-nums: «Bs 1.234.567,89»
+             cabe desde 264px de tarjeta sin partirse ni desbordar.
+           - Modo compacto (≤340px): menos aire, icono 24px, chips de totales en una línea con scroll.
+           - El título nunca se queda sin espacio: min-w-0 + truncado + área táctil invisible.
+           Soporte: Chrome/Edge 105+. Sin container queries todo sigue funcionando con los tamaños base. */
+        #sortableGrid .gs-medidor { container-type: inline-size; container-name: tarjeta; }
+
+        /* (1) Cifras: fluido por ancho de tarjeta */
+        #sortableGrid .kpi-num { font-size: clamp(18px, 8.2cqw, 30px) !important; line-height: 1.15; font-variant-numeric: tabular-nums; }
+        #sortableGrid #aaTotalGuardado, #sortableGrid #aaEnPlanes, #sortableGrid #aaDisponible { font-size: clamp(15px, 6.6cqw, 24px) !important; font-variant-numeric: tabular-nums; }
+        #sortableGrid #aaDisponible { overflow-wrap: anywhere; }
+
+        /* (2) Fila de Movimientos: la meta (fecha · origen · categoría) truncada y el importe sin partir */
+        #listaMovimientosWidget > div { min-width: 0; }
+        #listaMovimientosWidget > div > div:first-child > div > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #listaMovimientosWidget > div > div:last-child > span:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
+        /* importes de Actividades / Metas / Ahorro: nunca parten la fila */
+        #listaActividadesWidget span, #listaPlanesAhorroWidget span, #listaAhorroAcumuladoWidget span { overflow-wrap: anywhere; }
+        /* Metas: «Acumulado: Bs 3.456.789,01 de Bs 9.876.543,21 · 8 meses» es DATO, no adorno:
+           el `.truncate` del contenedor lo cortaba con «…» y desaparecía la meta a la que se apunta.
+           La línea envuelve en cualquier ancho (el TÍTULO sigue truncado a una línea por su propia clase). */
+        #listaPlanesAhorroWidget .truncate > span { white-space: normal !important; display: block; }
+
+        /* (3) Modo compacto por tarjeta (móviles de 320-412px y widgets de 1 columna en escritorio) */
+        @container tarjeta (max-width: 340px) {
+            #sortableGrid .gs-medidor .p-4 { padding: .75rem !important; }
+            #sortableGrid .gs-medidor .p-6 { padding: .875rem !important; }
+            .widget h3 { font-size: 14px !important; }
+            /* fila de Movimientos: menos aire y icono de 24px (gana ~22px para el texto) */
+            #listaMovimientosWidget > div { padding: .5rem .55rem !important; gap: .35rem !important; }
+            #listaMovimientosWidget > div > div:first-child { gap: .5rem !important; }
+            #listaMovimientosWidget > div > div:first-child > span:first-child { width: 1.5rem !important; height: 1.5rem !important; }
+            #listaMovimientosWidget > div > div:last-child { gap: .2rem !important; }
+            #listaMovimientosWidget button { padding: .1rem !important; }
+            /* chips de totales: con cifras de 7 dígitos los dos importes + el chip del mes suman ~277px
+               y la tarjeta ofrece ~212px. A 13px no caben (el tercero quedaba cortado a media palabra y
+               con un scroll sin barra); a 11px los dos totales entran en la primera línea y el chip del
+               mes baja a la segunda — sin recortes y sin scroll escondido. */
+            #sortableGrid .gs-medidor .flex-wrap:has(#mvTotalGastos) { gap: .3rem !important; row-gap: .25rem !important; }
+            #sortableGrid .gs-medidor .flex-wrap:has(#mvTotalGastos) > * { font-size: .68rem !important; padding-left: .4rem !important; padding-right: .4rem !important; white-space: nowrap; }
+        }
+
+        /* (4) Extra angosto (≤300px reales de tarjeta): se ocultan los subtítulos explicativos del header */
+        @container tarjeta (max-width: 300px) {
+            #sortableGrid .gs-medidor p[data-i18n$=".sub"] { display: none !important; }
+            #sortableGrid .gs-medidor .text-2xl { font-size: 1.05rem !important; }
+        }
+
+        /* (5) Tarjetas de ≤340px (todo teléfono y los widgets de 1 columna en escritorio): el importe
+           baja a su PROPIA línea. Presupuesto real de una fila: importe de 7 cifras ≈103px + 2 botones
+           ≈60px + icono 24px + huecos ≈40px = ~202px fijos; con 212px de contenido el título se quedaba
+           en 5px («…»). Apilando el importe (alineado a la derecha) el título recupera ~110-150px y no
+           hay que girar el teléfono ni recortar la cifra. Va con el mismo umbral que el modo compacto
+           para que un widget angosto se comporte igual en PC y en móvil.
+           `display: contents` del bloque derecho hace que importe y botones sean hijos de la fila;
+           el `order` los coloca: [icono+título] [botones] / [importe a la derecha]. */
+        @container tarjeta (max-width: 340px) {
+            #listaMovimientosWidget > div { flex-wrap: wrap; row-gap: .15rem; column-gap: .35rem; }
+            #listaMovimientosWidget > div > div:first-child { order: 1; flex: 1 1 0; }
+            #listaMovimientosWidget > div > div:last-child { display: contents; }
+            #listaMovimientosWidget > div > div:last-child > button { order: 2; }
+            #listaMovimientosWidget > div > div:last-child > span:first-child {
+                order: 3; flex: 0 0 100%; text-align: right; white-space: nowrap;
+                font-size: .75rem !important; line-height: 1.2;
+            }
         }
 </style>
 </head>
@@ -2185,7 +2291,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.59.1';   /* v0.59.1: planesAhorro entra a la sync (15 colecciones) · v0.59: I4-lite sync en vivo (push/pull + merge + Realtime) · v0.58.1: sello de Netlify sobre la barra móvil · v0.58: I2b copias en la nube */
+        const VER_APP = 'v0.61';   /* v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible) · v0.60: barra de scroll visible en las listas + tarjetas que nunca recortan · v0.59.1: planesAhorro a la sync (15) */
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -3804,6 +3910,54 @@
             }
         }
 
+        /* ===== v0.60 «Nada se recorta»: re-medición de alturas de Inicio =====
+           Las alturas se medían SOLO al arrancar (3 pasadas), al cruzar el breakpoint y en Histórico:
+           al añadir/editar/borrar registros —o cuando la sync trae datos de otro aparato— el contenido
+           cambiaba y la celda ya no se re-ajustaba: en móvil las filas nuevas se RECORTABAN contra el
+           borde de la tarjeta (cc es overflow:hidden) sin barra ni crecimiento.
+           Este observador re-mide con debounce (200 ms) ante cambios de CONTENIDO (childList/characterData)
+           y NO ante cambios de atributos: los updates de GridStack son de style y no lo re-disparan → sin bucles.
+           En escritorio no interviene: allí cada lista ya scrollea dentro de la celda (grow-only al cargar). */
+        function gsVigilarInicio(gs) {
+            /* gsLevanta devuelve la INSTANCIA GridStack; el nodo observado es su .el */
+            const nodo = gs && (gs.el || gs);
+            if (!nodo || nodo.nodeType !== 1 || nodo._gsVigila || typeof MutationObserver === "undefined") return;
+            nodo._gsVigila = true;
+            let tRepaso = null;
+            const obs = new MutationObserver(function(muts) {
+                let hayContenido = false;
+                for (let i = 0; i < muts.length && !hayContenido; i++) {
+                    const m = muts[i];
+                    if (m.type === "characterData") hayContenido = true;
+                    else if (m.type === "childList" && (m.addedNodes.length || m.removedNodes.length)) hayContenido = true;
+                }
+                if (!hayContenido) return;
+                if (tRepaso) clearTimeout(tRepaso);
+                tRepaso = setTimeout(function() {
+                    tRepaso = null;
+                    if (!gsInicio || !mqGS1Col.matches) return;
+                    if (!gsVisible(document.getElementById("vistaInicio"))) return;
+                    gsAjustarAlturas(gsInicio, true);
+                }, 200);
+            });
+            obs.observe(nodo, { childList: true, subtree: true, characterData: true });
+        }
+
+        /* v0.61: girar el teléfono, cambiar el zoom o la fuente del sistema cambia el ancho útil de las
+           tarjetas — se re-mide igual que al cambiar el contenido (debounce 220 ms, solo en 1 columna). */
+        let tVp = null;
+        function gsRepasoViewport() {
+            if (tVp) clearTimeout(tVp);
+            tVp = setTimeout(function() {
+                tVp = null;
+                if (!gsInicio || !mqGS1Col.matches) return;
+                if (!gsVisible(document.getElementById("vistaInicio"))) return;
+                gsAjustarAlturas(gsInicio, true);
+            }, 220);
+        }
+        window.addEventListener("resize", gsRepasoViewport, { passive: true });
+        if (window.visualViewport) window.visualViewport.addEventListener("resize", gsRepasoViewport, { passive: true });
+
         /* v0.25.15 «gráficas vivas»: tras el levantamiento del grid y cada ajuste de alturas, Chart.js
            re-mide y re-dibuja — los canvases se crean ANTES de que GridStack los re-parente (nacen al
            entrar a la sub-vista y 40ms después gsLevanta los mueve a su tarjeta de celda): sin este
@@ -3925,7 +4079,7 @@
 
         /* ================= v0.22: modo edicion + guardado + responsive del panel ================= */
         function asegurarGridInicio() {
-            if (gsVisible(grid) && !gsInicio) gsInicio = gsLevanta(grid, LAY_INICIO);
+            if (gsVisible(grid) && !gsInicio) { gsInicio = gsLevanta(grid, LAY_INICIO); gsVigilarInicio(gsInicio); }
             if (gsVisible(gridHist) && !gsHist) gsHist = gsLevanta(gridHist, LAY_HIST);
         }
         function gsSetModo(on) { [gsInicio, gsHist].forEach(function(gs) { if (gs) { try { gs.setStatic(!on); } catch (e) { } } }); }

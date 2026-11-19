@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.maatly.twa",
+      "sha256_cert_fingerprints": [
+        "10:F6:08:CE:66:FE:E6:3B:95:E2:13:F1:11:D6:D8:F5:3E:DF:BC:F9:54:57:07:AF:3D:14:5F:92:18:B9:0C:B3"
+      ]
+    }
+  }
+]
