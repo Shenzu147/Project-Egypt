@@ -2291,7 +2291,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.61';   /* v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible) · v0.60: barra de scroll visible en las listas + tarjetas que nunca recortan · v0.59.1: planesAhorro a la sync (15) */
+        const VER_APP = 'v0.62';   /* v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible) · v0.60: barra de scroll visible en las listas + tarjetas que nunca recortan · v0.59.1: planesAhorro a la sync (15) */
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -14027,7 +14027,9 @@
             syncCache[k] = ahora;
             if (!syncSucia[k]) { syncSucia[k] = true; syncSuciaDesde[k] = Date.now(); }
             const m = syncMarcasGet();
-            m[k] = Object.assign({}, m[k], { ts: Date.now() });
+            /* v0.62: el pendiente se PERSISTE en maatlySyncMarcas (clave ya existente): si la app se
+               cierra sin red, al siguiente arranque se recupera y se sube solo al volver la conexión. */
+            m[k] = Object.assign({}, m[k], { ts: Date.now(), sucia: 1, suciaDesde: syncSuciaDesde[k] || Date.now() });
             syncMarcasSet(m);
             if (def.t === 'arr' && typeof antes === 'string' && antes !== ahora) {
                 let viejos = null, nuevos = null;
@@ -14051,6 +14053,7 @@
         function syncProgramarEmpuje() {
             if (!supaCliente || !supaSesion || !supaSesion.user) return;
             if (!syncAutoActivado()) return;   /* auto OFF: solo sube el botón «Sincronizar ahora» */
+            if (navigator.onLine === false) return;   /* v0.62: sin red no se programa; el evento «online» sube lo pendiente */
             if (syncTimer) clearTimeout(syncTimer);
             syncTimer = setTimeout(function () { syncTimer = null; syncEmpujarSucias(); }, SYNC_DEBOUNCE_MS);
         }
@@ -14094,6 +14097,12 @@
                     filas.forEach(function (f) { syncSucia[f.coleccion] = true; });
                 } else {
                     syncUltimaSyncT = Date.now();
+                    /* v0.62: ya está en la nube — se limpia el pendiente persistido */
+                    try {
+                        const mm = syncMarcasGet();
+                        claves.forEach(function (k) { if (mm[k]) mm[k].sucia = 0; });
+                        syncMarcasSet(mm);
+                    } catch (eMar) {}
                     syncRepintarEstado();
                 }
             } catch (e) {
@@ -14182,7 +14191,11 @@
                     else { try { rawN = JSON.stringify(datos.valor); } catch (e) { return false; } }
                     const rawA = (syncCache[k] == null) ? localStorage.getItem(k) : syncCache[k];
                     if (rawN !== rawA) { syncEscribirLocal(k, rawN); aplico = true; if (k === 'maatlyPerfil') syncPerfilReaccionar(); }
-                    if (habiaSucia) { syncSucia[k] = false; mostrarToast(tiPlantilla('su.sync.conflicto', { n: 1 }), 'info'); }
+                    if (habiaSucia) {
+                        syncSucia[k] = false;
+                        try { const mm2 = syncMarcasGet(); if (mm2[k]) { mm2[k].sucia = 0; syncMarcasSet(mm2); } } catch (eM2) {}
+                        mostrarToast(tiPlantilla('su.sync.conflicto', { n: 1 }), 'info');
+                    }
                 }
                 /* else: local gana — queda sucia y subirá con el próximo empuje */
             }
@@ -14205,6 +14218,8 @@
                 syncUltimaSyncT = Date.now();
                 if (aplicadas) syncRepintar();
                 syncRepintarEstado();
+                /* v0.62: lo pendiente de un cierre sin red se sube en cuanto hay conexión */
+                if (navigator.onLine !== false && Object.keys(syncSucia).some(function (k) { return syncSucia[k]; })) syncEmpujarSucias();
             } catch (e) { console.warn('[Sync] bajar:', e && e.message); }
         }
 
@@ -14250,6 +14265,17 @@
         function syncArrancar() {
             if (syncWire) return;
             syncWire = true;
+            /* v0.62: recupera los cambios que quedaron pendientes de un cierre sin red */
+            try {
+                const mr = syncMarcasGet();
+                Object.keys(mr).forEach(function (k) {
+                    if (SYNC_MAP[k] && mr[k] && mr[k].sucia) {
+                        syncSucia[k] = true;
+                        syncSuciaDesde[k] = Number(mr[k].suciaDesde) || Number(mr[k].ts) || 0;
+                    }
+                });
+                if (Object.keys(syncSucia).length) syncRepintarEstado();
+            } catch (eRs) {}
             document.addEventListener('visibilitychange', function () {
                 if (document.visibilityState === 'hidden') {
                     if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; syncEmpujarSucias(); }   /* flush al ocultar la pestaña */
@@ -14261,7 +14287,10 @@
             window.addEventListener('online', function () { syncBajarTodo(); syncEmpujarSucias(); });   /* v0.59: bajar primero (LWW) y luego subir lo sucio */
             if (syncPullTimer) clearInterval(syncPullTimer);
             syncPullTimer = setInterval(function () {
-                if (supaSesion && supaSesion.user && syncAutoActivado() && document.visibilityState !== 'hidden') syncBajarTodo();
+                if (!supaSesion || !supaSesion.user || !syncAutoActivado() || document.visibilityState === 'hidden') return;
+                syncBajarTodo();
+                /* v0.62: si quedó algo sin subir (se escribió sin red), reintenta subirlo */
+                if (navigator.onLine !== false && Object.keys(syncSucia).some(function (k) { return syncSucia[k]; })) syncEmpujarSucias();
             }, SYNC_PULL_MS);
         }
 
@@ -14463,7 +14492,11 @@
                         document.head.appendChild(lk);
                     }
                     if ('serviceWorker' in navigator) {
-                        navigator.serviceWorker.register('./maatly-sw.js').catch(function () {});
+                        /* v0.62: comprobar si hay un SW nuevo al abrir (sin esperar la ventana de 24 h),
+                           para que un arreglo del shell (offline) llegue en el siguiente arranque. */
+                        navigator.serviceWorker.register('./maatly-sw.js').then(function (reg) {
+                            try { if (reg && reg.update) reg.update().catch(function () {}); } catch (eUp) {}
+                        }).catch(function () {});
                         navigator.serviceWorker.addEventListener('message', function (ev) {
                             try {
                                 const d = ev.data || {};
