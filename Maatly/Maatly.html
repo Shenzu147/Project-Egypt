@@ -46,11 +46,17 @@
         .edit-mode .grid-stack-item > .grid-stack-item-content { border: 2px dashed #818cf8; }
         .edit-mode .grid-stack-item > .grid-stack-item-content::after { content: ''; position: absolute; inset: 0; background: rgba(99, 102, 241, 0.05); pointer-events: none; border-radius: inherit; z-index: 10; }
         .edit-mode .edit-controls { display: flex; z-index: 20; }
-        .widget .edit-controls { right: 3.25rem; }   /* v0.25.39: la pastilla de arrastre se corre a la izquierda del ⓘ de info (esquina es del ⓘ) */
+        .widget .edit-controls { right: .5rem; }   /* v0.65: el ⓘ ya no vive en la esquina del widget (ahora va en la línea del título), así que el asa vuelve al rincón */
+        /* v0.65: en modo edición el rincón es del asa — el ⓘ se oculta (no se usa mientras reacomodas) */
+        .edit-mode .info-widget-btn { visibility: hidden; }
         /* v0.25.40 «ⓘ desnudo»: sin chapita — solo el ícono png, y la tinta negra se invierte a blanca en los temas con clase dark (oscuro/gemini) */
         .info-ico { filter: none; opacity: .5; transition: filter .15s ease, opacity .15s ease; }   /* v0.25.43: opacidad al 50% (al hover vuelve al 100% para confirmar que es interactivo) */
         html.dark .info-ico { filter: invert(1); }
         .info-widget-btn:hover .info-ico, .info-widget-btn:active .info-ico { opacity: 1; }
+        /* v0.65: el ⓘ mide 15px — área táctil invisible de 36px (lección v0.61: nunca min-width, que rompe la fila).
+           En modo edición se anula para no robarle clics al asa de arrastre. */
+        .info-widget-btn::after { content: ''; position: absolute; inset: -6px; border-radius: 9999px; }
+        .edit-mode .info-widget-btn::after { content: none; }
 
         
         /* FullCalendar Customization */
@@ -715,6 +721,16 @@
         @container tarjeta (max-width: 300px) {
             #sortableGrid .gs-medidor p[data-i18n$=".sub"] { display: none !important; }
             #sortableGrid .gs-medidor .text-2xl { font-size: 1.05rem !important; }
+        }
+
+        /* (5) v0.65 — el ⓘ de los KPI vive en la línea de la etiqueta. Entre ~768 y ~870px el panel entra
+           en 3 columnas y la tarjeta queda en ~200-250px: con la letra base (11px/.09em) la etiqueta no
+           cabía junto al icono y se partía en DOS líneas, así que las tres tarjetas quedaban con alturas
+           distintas (el número de cada una a una altura diferente). Un punto menos de letra y 2px menos de
+           hueco la devuelven a una sola línea sin recortar ni usar «…». */
+        @container tarjeta (max-width: 250px) {
+            .fila-kpi { column-gap: .375rem; }
+            .fila-kpi > .kpi-etiqueta { font-size: 10px; letter-spacing: .05em; }
         }
 
         /* (5) Tarjetas de ≤340px (todo teléfono y los widgets de 1 columna en escritorio): el importe
@@ -1504,7 +1520,10 @@
                             <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                                 <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                             </div>
-                            <span class="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-[0.09em] mb-1" data-i18n="ho.kpi.restante">Te queda</span>
+                            <div class="fila-kpi flex items-start justify-between gap-2 w-full mb-1">
+                                <span class="kpi-etiqueta text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-[0.09em] min-w-0" data-i18n="ho.kpi.restante">Te queda</span>
+                                <span class="info-anchor flex shrink-0 -mt-1" data-info-anchor></span>
+                            </div>
                             <span class="text-3xl font-extrabold c-positivo kpi-num" id="lblRestanteInicio">—</span>
                             <span class="text-xs text-slate-400 mt-1 font-semibold bs-equiv" data-vinculo="restanteKpi">—</span>
                             <!-- v0.45: las píldoras de tramo (lblTramoKpi) y de renovación (lblRenovaKpi) salieron de esta card a petición del usuario. La lente del tramo sigue viva en la lógica (estadoPeriodo → débito) y el aviso de renovación vive en Notificaciones. -->
@@ -1519,7 +1538,10 @@
                             <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                                 <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                             </div>
-                            <span class="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-[0.09em] mb-1" data-i18n="ho.kpi.ahorro">Ahorro del Mes</span>
+                            <div class="fila-kpi flex items-start justify-between gap-2 w-full mb-1">
+                                <span class="kpi-etiqueta text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-[0.09em] min-w-0" data-i18n="ho.kpi.ahorro">Ahorro del Mes</span>
+                                <span class="info-anchor flex shrink-0 -mt-1" data-info-anchor></span>
+                            </div>
                             <span class="text-3xl font-extrabold c-positivo kpi-num" id="kpiAhorroTotal">—</span>
                             <span class="text-xs text-slate-400 mt-1 font-semibold" id="lblKpiMesNombre">Este mes · plan + aportes</span>
                         </div>
@@ -1528,7 +1550,10 @@
                             <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                                 <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                             </div>
-                            <span class="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-[0.09em] mb-1" data-i18n="ho.kpi.gastos">Gastos del mes</span>
+                            <div class="fila-kpi flex items-start justify-between gap-2 w-full mb-1">
+                                <span class="kpi-etiqueta text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-[0.09em] min-w-0" data-i18n="ho.kpi.gastos">Gastos del mes</span>
+                                <span class="info-anchor flex shrink-0 -mt-1" data-info-anchor></span>
+                            </div>
                             <span class="text-3xl font-extrabold c-gasto kpi-num" id="kpiGastoPromedio">—</span>
                             <span class="text-xs text-slate-400 mt-1 font-semibold" id="lblKpiMesGasto">Este mes · total gastado</span>
                         </div>
@@ -1537,10 +1562,13 @@
                             <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                                 <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                             </div>
-                            <div class="p-4 border-b border-slate-100 dark:border-slate-700 pr-16 flex items-center justify-between gap-2">
-                                <div class="min-w-0">
-                                    <h3 class="text-sm font-bold text-slate-800 dark:text-white tracking-tight" data-i18n="ho.mv.tit">Movimientos de este mes</h3>
-                                    <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5" data-i18n="ho.mv.sub">Lo que anotaste y lo que terminaste en Actividades</p>
+                            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2">
+                                <div class="flex items-start justify-between gap-2 flex-1 min-w-0">
+                                    <div class="min-w-0">
+                                        <h3 class="text-sm font-bold text-slate-800 dark:text-white tracking-tight" data-i18n="ho.mv.tit">Movimientos de este mes</h3>
+                                        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5" data-i18n="ho.mv.sub">Lo que anotaste y lo que terminaste en Actividades</p>
+                                    </div>
+                                    <span class="info-anchor flex flex-shrink-0 -mt-0.5" data-info-anchor></span>
                                 </div>
                                 <button id="btnFiltroMovs" onclick="mvToggleFiltroMovs()" title="Filtrar movimientos" data-i18n-title="ho.mv.titFiltro" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-xs transition-colors flex items-center justify-center flex-shrink-0"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M7 12h10M10 20h4"></path></svg></button>
                             </div>
@@ -1561,11 +1589,12 @@
                             <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                                 <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                             </div>
-                            <div class="p-4 border-b border-slate-100 dark:border-slate-700 pr-16 flex items-center justify-between">
+                            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-start justify-between gap-2">
                                 <div class="min-w-0">
                                     <h3 class="text-sm font-bold text-slate-800 dark:text-white tracking-tight" data-i18n="ho.pl.tit">Metas de ahorro</h3>
                                     <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5" data-i18n="ho.pl.sub">Tus metas y cuánto llevas</p>
                                 </div>
+                                <span class="info-anchor flex flex-shrink-0 -mt-0.5" data-info-anchor></span>
                             </div>
                             <div id="listaPlanesAhorroWidget" class="p-4 flex-1 overflow-y-auto space-y-3"></div>
                         </div>
@@ -1574,12 +1603,17 @@
                             <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                                 <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                             </div>
-                            <div class="p-4 border-b border-slate-100 dark:border-slate-700 pr-16 flex items-center justify-between">
-                                <div class="min-w-0">
-                                    <h3 class="text-sm font-bold text-slate-800 dark:text-white tracking-tight" data-i18n="ho.ac.tit">Actividades</h3>
-                                    <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5" data-i18n="ho.ac.sub">Las mismas del tablero</p>
+                            <!-- v0.65: flex-wrap + min-w-[5.5rem] — en el panel apretado (768-870) el título no se parte a mitad de palabra:
+                                 si el bloque de título no cabe junto al contador/lupa, esos controles bajan de línea -->
+                            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2 flex-wrap">
+                                <div class="flex items-start justify-between gap-2 flex-1 min-w-[5.5rem]">
+                                    <div class="min-w-0">
+                                        <h3 class="text-sm font-bold text-slate-800 dark:text-white tracking-tight" data-i18n="ho.ac.tit">Actividades</h3>
+                                        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5" data-i18n="ho.ac.sub">Las mismas del tablero</p>
+                                    </div>
+                                    <span class="info-anchor flex flex-shrink-0 -mt-0.5" data-info-anchor></span>
                                 </div>
-                                <div class="flex items-center gap-1.5">
+                                <div class="flex items-center gap-1.5 flex-shrink-0">
                                     <span id="badgeCantActividades" class="text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-full">0</span>
                                     <button id="btnFiltroActividades" onclick="kbToggleFiltroActividades()" title="Filtrar y ordenar actividades" data-i18n-title="ho.ac.titFiltro" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-xs transition-colors flex items-center justify-center"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
                                 </div>
@@ -1603,11 +1637,12 @@
                             <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                                 <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                             </div>
-                            <div class="p-4 border-b border-slate-100 dark:border-slate-700 pr-16">
+                            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-start justify-between gap-2">
                                 <div class="min-w-0">
                                     <h3 class="text-sm font-bold text-slate-800 dark:text-white tracking-tight" data-i18n="ho.nt.tit">Notas</h3>
                                     <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5" data-i18n="ho.nt.sub">Ideas, enlaces y recordatorios</p>
                                 </div>
+                                <span class="info-anchor flex flex-shrink-0 -mt-0.5" data-info-anchor></span>
                             </div>
                             <div class="flex-1 flex flex-col min-h-0 gap-1 pt-1">
                                 <textarea id="txtNotas" class="flex-1 w-full px-4 py-2 bg-transparent resize-none focus:outline-none text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400" placeholder="Escribe ideas, enlaces o recordatorios..." data-i18n-ph="ho.nt.ph"></textarea>
@@ -1646,11 +1681,16 @@
                             <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                                 <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                             </div>
-                            <div class="flex justify-between items-center mb-4 pr-16 flex-wrap gap-2">
-                                <h3 class="font-bold text-slate-800 dark:text-white text-base flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
-                                    <span data-i18n="hi.g.tit">Ingresos, ahorro y gastos</span>
-                                </h3>
+                            <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
+                                <!-- v0.65: min-w-[9rem] obliga al chip «Mensual» a bajar de línea en pantallas muy angostas (320-360),
+                                     así el título conserva ancho para no meterse debajo del ⓘ -->
+                                <div class="flex items-start justify-between gap-2 flex-1 min-w-[9rem]">
+                                    <h3 class="font-bold text-slate-800 dark:text-white text-base flex items-center gap-2 min-w-0">
+                                        <svg class="w-5 h-5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                                        <span data-i18n="hi.g.tit">Ingresos, ahorro y gastos</span>
+                                    </h3>
+                                    <span class="info-anchor flex flex-shrink-0" data-info-anchor></span>
+                                </div>
                                 <button type="button" id="btnHistVista" onclick="histVistaMenu()" class="inline-flex items-center gap-1 text-xs font-extrabold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/40 px-2.5 py-1.5 rounded-full border border-indigo-200 dark:border-indigo-800/60 hover:brightness-95 transition-all flex-shrink-0">
                                     <span id="histVistaToken">Mensual</span>
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
@@ -1659,7 +1699,10 @@
                             <div class="flex-1 min-h-[15rem] relative w-full"><canvas id="chartHistoricoBar"></canvas></div>
                             <!-- v0.25.37: card del ahorro real del último mes — verde con racha / roja cuando pasaste · v0.25.38: aire entre textos · v0.25.39: ⓘ autogenerado (infoBtnBootstrap) — sin botón inline -->
                             <div id="cardAnaAhorro" class="relative mt-3 rounded-2xl border px-4 py-3.5 bg-positivo-suave border-emerald-200 dark:border-emerald-800/60">
-                                <div id="lblAnaAhorroMes" class="min-w-0 truncate text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 pr-8">—</div>
+                                <div class="flex items-start justify-between gap-2">
+                                    <div id="lblAnaAhorroMes" class="min-w-0 truncate text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">—</div>
+                                    <span class="info-anchor flex flex-shrink-0 -mt-1" data-info-anchor></span>
+                                </div>
                                 <div class="mt-1.5 flex items-baseline gap-2.5 flex-wrap">
                                     <span id="lblAnaAhorroMonto" class="text-xl font-extrabold kpi-num c-positivo">—</span>
                                     <span id="lblAnaAhorroPctTxt" class="text-[11px] font-extrabold c-positivo">—</span>
@@ -1673,11 +1716,16 @@
                             <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                                 <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                             </div>
-                            <h3 class="font-bold text-slate-800 dark:text-white text-base mb-4 pr-16 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path></svg>
-                                <span class="min-w-0" data-i18n="hi.pie.tit">¿En qué gastas más?</span>
-                                <span id="lblPiePeriodo" class="text-xs font-extrabold text-slate-400 flex-shrink-0">—</span>
-                            </h3>
+                            <div class="flex items-start gap-2 mb-4">
+                                <h3 class="font-bold text-slate-800 dark:text-white text-base flex flex-wrap items-center gap-2 flex-1 min-w-0">
+                                    <span class="flex items-center gap-2 min-w-0">
+                                        <svg class="w-5 h-5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path></svg>
+                                        <span class="min-w-0" data-i18n="hi.pie.tit">¿En qué gastas más?</span>
+                                    </span>
+                                    <span id="lblPiePeriodo" class="text-xs font-extrabold text-slate-400 flex-shrink-0">—</span>
+                                </h3>
+                                <span class="info-anchor flex flex-shrink-0 self-start" data-info-anchor></span>
+                            </div>
                             <div class="flex-1 min-h-[16rem] relative w-full"><canvas id="chartHistoricoPie"></canvas></div>
                         </div>
 
@@ -1686,11 +1734,16 @@
                         <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                             <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                         </div>
-                        <div class="flex justify-between items-start mb-4 pr-16 flex-wrap gap-2">
-                            <h3 class="font-bold text-slate-800 dark:text-white text-base flex items-center gap-2 min-w-0">
-                                <svg class="w-5 h-5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                                <span class="min-w-0" data-i18n="hi.cats.tit">Comparación por categoría</span>
-                            </h3>
+                        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
+                            <!-- v0.65: min-w-[9rem] — si los chips de periodo no caben al lado del título, bajan de línea
+                                 (antes el título se comprimía a ~60 px y «Comparación» se partía a mitad de palabra) -->
+                            <div class="flex items-start justify-between gap-2 flex-1 min-w-[9rem]">
+                                <h3 class="font-bold text-slate-800 dark:text-white text-base flex items-center gap-2 min-w-0">
+                                    <svg class="w-5 h-5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                    <span class="min-w-0" data-i18n="hi.cats.tit">Comparación por categoría</span>
+                                </h3>
+                                <span class="info-anchor flex flex-shrink-0" data-info-anchor></span>
+                            </div>
                             <span class="flex items-center gap-1 flex-wrap justify-end min-w-0">
                                 <span id="lblAnaCatsMes" class="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/40 px-2.5 py-1 rounded-full">—</span>
                                 <button type="button" data-av="1" onclick="anaCatsVentanaSet(1)" title="Promedio del mes previo" data-i18n-title="hi.cats.tit1" class="chip-ana-vent">1 M</button>
@@ -1707,10 +1760,11 @@
                         <div class="edit-controls absolute top-2 right-2 hidden gap-1 z-10 bg-white dark:bg-slate-700 p-1 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
                             <div class="drag-handle p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-300 cursor-grab transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
                         </div>
-                        <div class="flex items-center justify-between gap-2 mb-3 pr-16">
-                            <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2 text-sm">
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2 text-sm flex-1 min-w-0">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 22h18"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18v-7M10 18v-7M14 18v-7M18 18v-7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L3 7h18l-9-5z"></path></svg> <span data-i18n="iwi.hAcumulado.t">Tu ahorro acumulado</span>
                             </h3>
+                            <span class="info-anchor flex flex-shrink-0 self-start -mt-0.5" data-info-anchor></span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-3">
@@ -2295,7 +2349,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.64';   /* v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible) · v0.60: barra de scroll visible en las listas + tarjetas que nunca recortan · v0.59.1: planesAhorro a la sync (15) */
+        const VER_APP = 'v0.65';   /* v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -3595,10 +3649,14 @@
                 b.type = 'button';
                 b.title = ti('hi.info.btnTit');
                 b.setAttribute('aria-label', ti('hi.info.btnTit'));
-                b.className = 'info-widget-btn absolute top-2.5 right-2.5 z-30 w-6 h-6 flex-shrink-0 flex items-center justify-center cursor-pointer transition-transform hover:scale-110 active:scale-90';
+                /* v0.65: si la tarjeta declara [data-info-anchor], el ⓘ va EN FLUJO en la línea del título
+                   (los KPI sin header lo tenían suelto en la esquina y se despegaba al estirar la tarjeta). */
+                const ancla = raiz.querySelector('[data-info-anchor]');
+                const claseBase = 'info-widget-btn z-30 w-6 h-6 flex-shrink-0 flex items-center justify-center cursor-pointer transition-transform hover:scale-110 active:scale-90';
+                b.className = ancla ? ('relative ' + claseBase) : ('absolute top-2.5 right-2.5 ' + claseBase);
                 b.innerHTML = '<img src="' + INFO_ICON_SRC + '" alt="" class="info-ico w-[15px] h-[15px] pointer-events-none">';   /* v0.25.45: −25% de talla (20px → 15px) */
                 b.addEventListener('click', function(ev) { ev.stopPropagation(); window.abrirInfoWidget(clave); });
-                raiz.appendChild(b);
+                (ancla || raiz).appendChild(b);
                 n++;
             });
             const iwImg = document.getElementById('iwIconImg');
