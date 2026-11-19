@@ -8819,7 +8819,7 @@
             }
             acTarget = null;
             aaDlgCerrar('modalAsignarCat');
-            mostrarToast('Categoría asignada: ' + (acSel || ti('cal.chip.catSin')), 'success');
+            if (acSel) mostrarToast('Categoría asignada: ' + acSel, 'success'); else mostrarToast('Se quitó la categoría', 'success');
             const det = document.getElementById('modalDetalleMes');
             if (dmMesActual && det && !det.classList.contains('hidden')) abrirDetalleMes(dmMesActual); /* re-pinta el Detalle si está abierto */
             if (t.scope === 'arch' && (typeof subTabInicioActual !== 'undefined') && subTabInicioActual === 'historico') {
