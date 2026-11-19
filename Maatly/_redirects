@@ -1,17 +1,20 @@
-# Maatly — alias de entrada (Cloudflare Pages y Netlify leen este archivo).
+# Maatly — alias de entrada (Cloudflare Pages lee este archivo).
 #
 # Por qué existe:
-#   · Pages convierte /Maatly.html en /Maatly (conserva mayúsculas) y NO sirve nada en /.
-#   · Netlify sirve /maatly y manda /Maatly -> 301 /maatly (minúsculas), y en / da 404.
+#   · Pages convierte /Maatly.html en /Maatly (conserva mayúsculas) y NO sirve nada en /;
+#     sin estas reglas, / y /maatly responden 404.
+#   · El TWA instalado arranca en /maatly (minúscula), así que ese alias es obligatorio.
 #
 # Se usan REESCRITURAS (200), no redirecciones: el navegador se queda en la URL que pidió
-# (el TWA instalado sigue entrando en /maatly, sin saltos nuevos) y no hay riesgo de bucle
-# entre los dos hosts, porque /Maatly.html es un archivo real en ambos.
+# y no hay saltos de más. OJO: el destino se escribe SIN .html a propósito — si se apunta
+# a /Maatly.html, Pages vuelve a resolver la ruta, le quita la extensión y responde 308.
 #
-# '/'  -> la raíz del sitio tiene la app (hoy da 404 en los dos hosts).
-# '/maatly' -> alias en minúscula que usa el TWA; en Pages sin esto daría 404.
-/         /Maatly.html   200
-/maatly   /Maatly.html   200
+# Estado de los hosts (nov/2026):
+#   · maatly.pages.dev  = canónico (este archivo es para él).
+#   · maatly.netlify.app = legado: sirve /maatly de forma nativa y ya no despliega.
+#   · shenzu147.github.io = espejo de emergencia (ignora este archivo).
+/         /Maatly   200
+/maatly   /Maatly   200
 
 # Referencias:
 #  - Cloudflare Pages: https://developers.cloudflare.com/pages/configuration/redirects/
