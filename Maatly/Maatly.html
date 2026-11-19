@@ -2295,7 +2295,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.62.1';   /* v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible) · v0.60: barra de scroll visible en las listas + tarjetas que nunca recortan · v0.59.1: planesAhorro a la sync (15) */
+        const VER_APP = 'v0.64';   /* v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible) · v0.60: barra de scroll visible en las listas + tarjetas que nunca recortan · v0.59.1: planesAhorro a la sync (15) */
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -5627,7 +5627,11 @@
                 'nf.prevAviso.d': 'Ejemplo real (el del botón de abajo) con el mismo estilo del centro de notificaciones.',
                 'nt.unidadH': '{a} h',
                 'nt.unidadM': '{a} min',
-                'pf.toastErr': 'El perfil no se pudo guardar — revisa la consola (F12)'
+                'pf.toastErr': 'El perfil no se pudo guardar — revisa la consola (F12)',
+                /* v0.64: textos del agente que estaban fuera del dict */
+                'ag.chat.errInesperado': 'Ocurrió un error inesperado: {m}',
+                'ag.gen.desconocido': 'desconocido',
+                'ag.tg.chatNombre': 'Chat'
             },
             en: {
                 'aj.volver': '← Back to Settings',
@@ -6657,7 +6661,10 @@
                 'nf.prevAviso.d': 'Real example (the button below) with the same style as the notification center.',
                 'nt.unidadH': '{a} h',
                 'nt.unidadM': '{a} min',
-                'pf.toastErr': 'The profile could not be saved — check the console (F12)'
+                'pf.toastErr': 'The profile could not be saved — check the console (F12)',
+                'ag.chat.errInesperado': 'An unexpected error occurred: {m}',
+                'ag.gen.desconocido': 'unknown',
+                'ag.tg.chatNombre': 'Chat'
             }
         };
         function idiomaApp() { return perfilGet().idioma === 'en' ? 'en' : 'es'; }
@@ -10815,10 +10822,12 @@
             const calendarEl = document.getElementById('calendarContainer');
 
             /* ---------- v0.15: niveles, migas de pan y zoom del calendario ---------- */
+            /* v0.64: solo la vista; los rótulos de las migas vienen del dict (el campo `nombre`
+               tenía texto en español y no lo leía nadie). */
             const CAL_NIVELES = [
-                { vista: 'multiMonthYear', nombre: 'Año' },
-                { vista: 'dayGridMonth', nombre: 'Mes' },
-                { vista: 'timeGridWeek', nombre: 'Semana' }
+                { vista: 'multiMonthYear' },
+                { vista: 'dayGridMonth' },
+                { vista: 'timeGridWeek' }
             ];
             let calAnimPendiente = null;
             /* v0.25.34: cierre animado del panel lateral — estado de la animación en curso */
@@ -11726,6 +11735,95 @@
             Object.keys(k || {}).forEach(x => { if (base.indexOf(x) === -1) o[x] = k[x]; });
             return Object.keys(o).length ? { kpisExtras: o } : {};
         }
+
+        /* ---------- v0.64: el respaldo habla el idioma de la app ----------
+           REGLA DE ORO: en español el archivo sale BYTE A BYTE como siempre (xlTr devuelve
+           la misma cadena) — cero drift. En inglés se traducen SOLO los rótulos: nombres de
+           hoja, cabeceras y las etiquetas/notas de la hoja Info. Los DATOS del usuario
+           (descripciones, motivos, notas, categorías) jamás se tocan.
+           El import sigue aceptando los dos idiomas: xlHojaPuente() busca la hoja por su
+           nombre español y, si no está, por el inglés; y la marca de formato vale
+           'Formato' o 'Format'. XL_FORMATO y la columna «Extra (JSON)» NUNCA cambian. */
+        const XL_HOJAS = [
+            ['Historial', 'History'],
+            ['Gastos Historial', 'History Expenses'],
+            ['Movimientos', 'Movements'],
+            ['Agenda y Tablero', 'Agenda & Board'],
+            ['Estados del Tablero', 'Board States'],
+            ['Planes de Ahorro', 'Savings Plans'],
+            ['Aportes al Ahorro', 'Savings Deposits'],
+            ['Retiros del Ahorro', 'Savings Withdrawals'],
+            ['Archivo Mensual', 'Monthly Archive'],
+            ['Movimientos Archivados', 'Archived Movements'],
+            ['Metas Cumplidas', 'Completed Goals'],
+            ['Categorías', 'Categories'],
+            ['Notas', 'Notes'],
+            ['Adjuntos de Notas', 'Note Attachments'],
+            ['Configuración', 'Settings']
+        ];
+        const XL_TXT = {
+            /* cabeceras */
+            'Clave': 'Key', 'Valor': 'Value', 'Parte': 'Part',
+            'Mes': 'Month', 'Periodo': 'Period', 'Ingreso': 'Income', 'Ahorro': 'Savings',
+            'Sobrante': 'Left over', 'Tasa': 'Rate', 'Extra (JSON)': 'Extra (JSON)',
+            'Categoría': 'Category', 'Fecha': 'Date', 'Descripción': 'Description',
+            'Monto': 'Amount', 'Tipo': 'Type', 'Origen': 'Source', 'Título': 'Title',
+            'Estado': 'Status', 'Fecha y hora': 'Date and time', 'Notas': 'Notes',
+            'Nombre': 'Name', 'Color': 'Color', 'Plan': 'Plan', 'Objetivo': 'Target',
+            'Ahorrado': 'Saved', 'Fecha Estimada': 'Estimated date',
+            'Usa Ahorro Actual': 'Uses current savings', 'Fuente': 'Source',
+            'Motivo': 'Reason', 'Modo': 'Mode', 'Fecha de Cierre': 'Closing date',
+            'Gasto Plan': 'Planned spending', 'Gasto Real': 'Actual spending',
+            'Resultado': 'Result', 'Texto': 'Text', 'Tamaño': 'Size',
+            'Contenido (Base64)': 'Content (Base64)',
+            /* etiquetas y notas de la hoja Info */
+            'Aplicación': 'Application',
+            'Maatly — Agente Personal de Finanzas y Actividades': 'Maatly — Personal Finance & Activity Agent',
+            'Formato': 'Format',
+            'Versión de la app': 'App version',
+            'Moneda': 'Currency',
+            'Fecha de exportación': 'Export date',
+            'Cómo restaurar': 'How to restore',
+            'Configuración → Datos y Respaldos → Restaurar (elige este archivo .xlsx).': 'Settings → Data & Backups → Restore (pick this .xlsx file).',
+            'Contenido': 'Contents',
+            'Historial · Gastos Historial · Movimientos · Agenda y Tablero · Estados del Tablero · Planes de Ahorro · Aportes al Ahorro · Retiros del Ahorro · Archivo Mensual · Movimientos Archivados · Metas Cumplidas · Categorías · Notas · Adjuntos de Notas · Configuración': 'History · History Expenses · Movements · Agenda & Board · Board States · Savings Plans · Savings Deposits · Savings Withdrawals · Monthly Archive · Archived Movements · Completed Goals · Categories · Notes · Note Attachments · Settings',
+            'Seguridad': 'Security',
+            'Este respaldo no incluye claves API ni PIN.': 'This backup does not include API keys or PIN.',
+            'Ingreso mensual configurado': 'Configured monthly income',
+            'Ahorro deseado configurado': 'Configured target savings'
+        };
+        function xlTr(s) {
+            return (idiomaApp() === 'en' && typeof s === 'string' && XL_TXT[s]) ? XL_TXT[s] : s;
+        }
+        /* Nombre de hoja en el idioma de la app (en ES devuelve el mismo de siempre). */
+        function xlHojaNom(nombreES) {
+            if (idiomaApp() !== 'en') return nombreES;
+            for (var i = 0; i < XL_HOJAS.length; i++) { if (XL_HOJAS[i][0] === nombreES) return XL_HOJAS[i][1]; }
+            return nombreES;
+        }
+        /* Al leer: la hoja por su nombre español y, si no está, por el inglés (respaldo bilingüe). */
+        function xlHojaPuente(hojas, nombreES) {
+            if (hojas[nombreES]) return hojas[nombreES];
+            for (var i = 0; i < XL_HOJAS.length; i++) {
+                if (XL_HOJAS[i][0] === nombreES) return hojas[XL_HOJAS[i][1]] || null;
+            }
+            return null;
+        }
+        /* Línea «Moneda» de la hoja Info, en el idioma de la app. */
+        function xlMonedaInfo() {
+            try {
+                const mc = monedaCfgGet();
+                const en = (idiomaApp() === 'en');
+                let s = mc.code + ' (' + mc.simbolo + ', ' + mc.decimales + (en ? ' dec.' : ' dec.');
+                if (mc.code !== mc.base) {
+                    s += ' · ' + (en ? 'showing in ' : 'viendo en ') + mc.code + ', ' + (en ? 'data stored in ' : 'datos guardados en ') + mc.base;
+                    s += mc.sinTasa
+                        ? (en ? ' · NO saved rate' : ' · SIN tasa guardada')
+                        : ' · 1 ' + mc.base + ' = ' + mc.tasa.toLocaleString('es-VE', { maximumFractionDigits: 6 }) + ' ' + mc.code + (mc.fechaTasa ? (en ? ' (rate of ' : ' (tasa del ') + mc.fechaTasa + ')' : '');
+                }
+                return s + ')';
+            } catch (e) { return 'USD'; }
+        }
         function xlBackupConstruir() {
             const LSj = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
             const arr = (k) => { const v = LSj(k); return Array.isArray(v) ? v : []; };
@@ -11752,14 +11850,24 @@
 
             const finCfgExp = (typeof finanzasCfgGet === 'function') ? finanzasCfgGet() : { ingreso: 0, ahorroObj: 0 };
             const hojas = [];
-            const H = (nombre, anchos, filas) => hojas.push({ nombre: nombre, anchos: anchos, filas: filas });
+            /* v0.64: el nombre de la hoja y la fila de cabeceras se traducen; en la hoja Info
+               también se traducen las etiquetas de la primera columna. Los datos van intactos. */
+            const H = (nombre, anchos, filas) => hojas.push({
+                nombre: xlHojaNom(nombre),
+                anchos: anchos,
+                filas: filas.map(function (f, i) {
+                    if (i === 0) return f.map(xlTr);
+                    if (nombre === 'Info') return f.map(xlTr);
+                    return f;
+                })
+            });
 
             H('Info', [24, 80], [
                 ['Clave', 'Valor'],
                 ['Aplicación', 'Maatly — Agente Personal de Finanzas y Actividades'],
                 ['Formato', XL_FORMATO],
                 ['Versión de la app', VER_APP], /* v0.25.15: desde la constante única */
-            ['Moneda', (function() { try { const mc = monedaCfgGet(); let s = mc.code + ' (' + mc.simbolo + ', ' + mc.decimales + ' dec.'; if (mc.code !== mc.base) s += ' · viendo en ' + mc.code + ', datos guardados en ' + mc.base + (mc.sinTasa ? ' · SIN tasa guardada' : ' · 1 ' + mc.base + ' = ' + mc.tasa.toLocaleString('es-VE', { maximumFractionDigits: 6 }) + ' ' + mc.code + (mc.fechaTasa ? ' (tasa del ' + mc.fechaTasa + ')' : '')); return s + ')'; } catch (e) { return 'USD'; } })()], /* v0.40.1: base + visualización + tasa opcional fechada */
+            ['Moneda', xlMonedaInfo()], /* v0.40.1 → v0.64: la arma xlMonedaInfo() en el idioma de la app */
                 ['Fecha de exportación', iso + ' ' + hora],
                 ['Cómo restaurar', 'Configuración → Datos y Respaldos → Restaurar (elige este archivo .xlsx).'],
                 ['Contenido', 'Historial · Gastos Historial · Movimientos · Agenda y Tablero · Estados del Tablero · Planes de Ahorro · Aportes al Ahorro · Retiros del Ahorro · Archivo Mensual · Movimientos Archivados · Metas Cumplidas · Categorías · Notas · Adjuntos de Notas · Configuración'],
@@ -11925,11 +12033,12 @@
 
         /* ---------- 5) Restauración desde las hojas ---------- */
         function xlRestaurar(hojas) {
-            const info = hojas['Info'] || [];
+            const info = xlHojaPuente(hojas, 'Info') || [];
             let formato = '';
-            info.forEach(f => { if (String(f[0] || '') === 'Formato') formato = String(f[1] || ''); });
+            info.forEach(f => { const c0 = String(f[0] || ''); if (c0 === 'Formato' || c0 === 'Format') formato = String(f[1] || ''); });
             if (formato !== XL_FORMATO) throw new Error('Este archivo no es un respaldo de Maatly (falta la marca de formato).');
-            const filasDe = (n) => { const h = hojas[n]; return (h && h.length > 1) ? h.slice(1) : []; };
+            /* v0.64: la hoja se busca por su nombre español y, si no está, por el inglés */
+            const filasDe = (n) => { const h = xlHojaPuente(hojas, n); return (h && h.length > 1) ? h.slice(1) : []; };
             const extraDe = (s) => { try { const o = JSON.parse(s || '{}'); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; } catch (e) { return {}; } };
             const uni = (a, b) => Object.assign({}, a, b);
             const num = (v) => {
@@ -12201,7 +12310,7 @@
                     appendMessage(respuesta, 'ai');
                 } catch (err) {
                     removeTypingIndicator(typingId);
-                    appendMessage('Ocurrió un error inesperado: ' + (err && err.message ? err.message : 'desconocido'), 'ai');
+                    appendMessage(tiPlantilla('ag.chat.errInesperado', { m: (err && err.message ? err.message : ti('ag.gen.desconocido')) }), 'ai');
                 }
             });
         }
@@ -12279,15 +12388,20 @@
         }
 
         /* ---------- Registro de modelos (multi-modelo con credencial propia) ---------- */
-        const AG_MODELOS_DEFECTO = [
-            { id: 'glm', nombre: 'GLM vía OpenRouter', endpoint: 'https://openrouter.ai/api/v1/chat/completions', modelo: 'z-ai/glm-5.3', modeloVision: 'z-ai/glm-5.3-flash', clave: '', vision: true },
-            { id: 'gemini', nombre: 'Gemini (Google)', endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', modelo: 'gemini-2.0-flash', modeloVision: 'gemini-2.0-flash', clave: '', vision: true },
-            { id: 'glm-directo', nombre: 'GLM Z.ai directo (avanzado)', endpoint: 'https://api.z.ai/api/paas/v4/chat/completions', modelo: 'glm-5.3', modeloVision: 'glm-4.5v', clave: '', vision: true }
-        ];
+        /* v0.64: era un `const`, y el panel de estado (agModeloActivo) puede llamarlo antes de
+           que la sentencia se evalúe → TDZ latente. Una declaración de función se hoistea entera,
+           así que nunca hay zona muerta. Devuelve un registro NUEVO en cada llamada. */
+        function agModelosDefecto() {
+            return [
+                { id: 'glm', nombre: 'GLM vía OpenRouter', endpoint: 'https://openrouter.ai/api/v1/chat/completions', modelo: 'z-ai/glm-5.3', modeloVision: 'z-ai/glm-5.3-flash', clave: '', vision: true },
+                { id: 'gemini', nombre: 'Gemini (Google)', endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', modelo: 'gemini-2.0-flash', modeloVision: 'gemini-2.0-flash', clave: '', vision: true },
+                { id: 'glm-directo', nombre: 'GLM Z.ai directo (avanzado)', endpoint: 'https://api.z.ai/api/paas/v4/chat/completions', modelo: 'glm-5.3', modeloVision: 'glm-4.5v', clave: '', vision: true }
+            ];
+        }
 
         function agGetModelos() {
             if (localStorage.getItem('maatlyModelosVer') !== '2') {
-                const defs = JSON.parse(JSON.stringify(AG_MODELOS_DEFECTO));
+                const defs = agModelosDefecto();
                 agSetModelos(defs);
                 localStorage.setItem('maatlyModelosVer', '2');
                 localStorage.setItem('maatlyModeloActivo', 'glm');
@@ -12297,7 +12411,7 @@
                 const v = JSON.parse(localStorage.getItem('maatlyModelos'));
                 if (Array.isArray(v) && v.length) return v;
             } catch (e) {}
-            return JSON.parse(JSON.stringify(AG_MODELOS_DEFECTO));
+            return agModelosDefecto();
         }
         function agSetModelos(lista) { localStorage.setItem('maatlyModelos', JSON.stringify(lista)); }
         function agModeloActivo() {
@@ -12330,7 +12444,7 @@
             const fmt = n => (n < 0 ? '-' : '') + mFmt(n);
 
             let html = '';
-            const mesNombre = hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            const mesNombre = hoy.toLocaleDateString(mesLoc(), { month: 'long', year: 'numeric' });   /* v0.64: idioma vivo (antes 'es-ES' fijo) */
             html += '<p class="font-bold text-slate-700 dark:text-slate-200">' + (mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1)) + '</p>';
             const restanteReal = ingReal - gastoReal; /* v0.25: sin plan — resultado 100% real */
             html += '<p>' + tiPlantilla('ag.resGen.resultado', { k: restanteReal < 0 ? 'c-alarma' : 'c-positivo', n: fmt(restanteReal) }) + '</p>';
@@ -12799,7 +12913,7 @@
                 const txt = await r.text().catch(() => '');
                 return { ok: false, msg: tiPlantilla('ag.conn.errHttp', { s: r.status, t: txt.slice(0, 160) }) };
             } catch (e) {
-                return { ok: false, msg: tiPlantilla('ag.conn.errRed', { m: (e && e.message ? e.message : 'desconocido') }) };
+                return { ok: false, msg: tiPlantilla('ag.conn.errRed', { m: (e && e.message ? e.message : ti('ag.gen.desconocido')) }) };
             }
         }
 
@@ -12892,7 +13006,7 @@
                         const c = m && (m.chat || m);
                         if (c && c.id !== undefined && !visto[c.id]) {
                             visto[c.id] = true;
-                            chats.push({ id: c.id, nombre: (c.title || c.username || [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Chat'), tipo: c.type || '' });
+                            chats.push({ id: c.id, nombre: (c.title || c.username || [c.first_name, c.last_name].filter(Boolean).join(' ') || ti('ag.tg.chatNombre')), tipo: c.type || '' });
                         }
                     });
                 });
@@ -13017,19 +13131,25 @@
         /* ---------- Núcleo del agente: responder con GLM o modelo activo ---------- */
         function agSystemPrompt() {
             const nombre = localStorage.getItem('nombreUsuario') || 'Alex';
+            const en = (idiomaApp() === 'en');   /* v0.64: el coach responde en el idioma de la app */
             const disponible = document.getElementById('lblRestanteInicio') ? document.getElementById('lblRestanteInicio').textContent : '—';
             const gastoPromedio = document.getElementById('kpiGastoPromedio') ? document.getElementById('kpiGastoPromedio').textContent : '—';
-            let evs = 'nada en la agenda';
+            let evs = en ? 'nothing on the agenda' : 'nada en la agenda';
             const actsAI = kbGetActividades().filter(a => a.fecha);
             if (actsAI.length > 0) {
                 evs = actsAI.map(a => {
                     const est = kbGetEstados().find(e => e.id === a.estadoId);
-                    return "'" + a.titulo + "' (" + (est ? est.nombre : 'Pendiente') + ") el " + new Date(String(a.fecha).replace('T', ' ')).toLocaleDateString();
+                    return "'" + a.titulo + "' (" + (est ? est.nombre : 'Pendiente') + ") " + (en ? 'on ' : 'el ') + new Date(String(a.fecha).replace('T', ' ')).toLocaleDateString();
                 }).join(', ');
             }
             const planes = getPlanesAhorro();
-            let planesCtx = 'sin planes de ahorro registrados';
-            if (planes.length > 0) planesCtx = planes.map(p => "'" + p.nombre + "': objetivo $" + p.montoObjetivo + ", acumulado $" + (p.montoActual || 0)).join('; ');
+            let planesCtx = en ? 'no savings plans registered' : 'sin planes de ahorro registrados';
+            if (planes.length > 0) planesCtx = planes.map(p => en
+                ? ("'" + p.nombre + "': target $" + p.montoObjetivo + ", saved $" + (p.montoActual || 0))
+                : ("'" + p.nombre + "': objetivo $" + p.montoObjetivo + ", acumulado $" + (p.montoActual || 0))).join('; ');
+            if (en) {
+                return 'You are "Maatly", the personal agent (financial and productivity coach) of ' + nombre + ', who lives in Latin America and manages budgets in pesos or dollars. Tone: warm, motivating and practical, like a good coach; celebrate wins and nudge kindly. ALWAYS answer in English, brief and actionable (max 180 words unless asked for more).\n\n[Internal context: available today ' + disponible + '; average monthly spending ' + gastoPromedio + '; activities: ' + evs + '; savings plans: ' + planesCtx + '; current date and time: ' + new Date().toLocaleString() + '. Use this date as the base for "today" or "tomorrow".]\n\nACTION PROTOCOL (only when the user asks):\n- To CREATE an activity, end your reply with an exact line: [[MAATLY:AGENDAR]]{"titulo":"...","fecha":"YYYY-MM-DDTHH:MM","tipo":"tarea|evento","estado":"Pendiente|En curso|Completado"}[[/MAATLY]]\nIMPORTANT: in "titulo" write ONLY the short activity name, with no times or dates inside the text; the time ALWAYS goes in "fecha" in 24 h format (e.g. 2026-05-12T18:00 for 6:00 p.m.). Keep the JSON keys and their values EXACTLY as written above — they are internal identifiers, not text for the user.\n- To DELETE by keyword: [[MAATLY:CANCELAR]]{"palabra":"..."}[[/MAATLY]]\nDo not explain or mention these commands to the user; just include them at the end when appropriate.';
+            }
             return 'Eres "Maatly", el agente personal (coach financiero y de productividad) de ' + nombre + ', quien vive en Latinoamérica y maneja presupuestos en pesos o dólares. Tono: cercano, motivador y práctico, como un buen coach; celebra los logros y empuja con amabilidad. Responde SIEMPRE en español, breve y accionable (máx. 180 palabras salvo que te pidan más).\n\n[Contexto interno: disponible hoy ' + disponible + '; gasto promedio mensual ' + gastoPromedio + '; actividades: ' + evs + '; planes de ahorro: ' + planesCtx + '; fecha y hora actual: ' + new Date().toLocaleString() + '. Usa esta fecha como base para "hoy" o "mañana".]\n\nPROTOCOLO DE ACCIONES (solo cuando el usuario lo pida):\n- Para CREAR una actividad, termina tu respuesta con una línea exacta: [[MAATLY:AGENDAR]]{"titulo":"...","fecha":"YYYY-MM-DDTHH:MM","tipo":"tarea|evento","estado":"Pendiente|En curso|Completado"}[[/MAATLY]]\nIMPORTANTE: en "titulo" escribe SOLO el nombre corto de la actividad, sin horas ni fechas dentro del texto; la hora va SIEMPRE en "fecha" en formato 24 h (ej. 2026-05-12T18:00 para las 6:00 p. m., 2026-05-12T22:00 para las 10:00 p. m.).\n- Para ELIMINAR por palabra clave: [[MAATLY:CANCELAR]]{"palabra":"..."}[[/MAATLY]]\nNo expliques ni menciones estos comandos al usuario; solo inclúyelos al final cuando corresponda.';
         }
 
@@ -13398,7 +13518,7 @@
             if (ms < 60e3) return ti('nt.ts.ahora');
             if (ms < 3600e3) return tiPlantilla('nt.ts.min', { n: Math.floor(ms / 60e3) });
             if (ms < 86400e3) return tiPlantilla('nt.ts.h', { n: Math.floor(ms / 3600e3) });
-            try { return d.toLocaleDateString('es', { day: 'numeric', month: 'short' }) + ', ' + notifP2(d.getHours()) + ':' + notifP2(d.getMinutes()); } catch (e) { return d.toLocaleDateString(); }
+            try { return d.toLocaleDateString(mesLoc(), { day: 'numeric', month: 'short' }) + ', ' + notifP2(d.getHours()) + ':' + notifP2(d.getMinutes()); } catch (e) { return d.toLocaleDateString(); }
         }
 
         function notifMeta(tp) {
