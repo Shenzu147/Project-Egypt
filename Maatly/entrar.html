@@ -21,6 +21,10 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
         button { touch-action: manipulation; }
+        /* v0.62: el sello flotante de Netlify (#nl-badge-frame) se oculta también en el portal. */
+        iframe#nl-badge-frame,
+        iframe[id^="nl-badge"],
+        iframe[title*="Netlify" i] { display: none !important; }
     </style>
 </head>
 <body class="min-h-screen bg-[#090d16] text-slate-100 flex flex-col items-center justify-center px-4 py-10 selection:bg-indigo-500/30">
@@ -53,7 +57,7 @@
        · PORTAL_CFG va sincronizada con SUPA_CFG de Maatly.html (misma url y
          key publishable; la service key JAMÁS va al HTML).
        ================================================================ */
-    const VER_PORTAL = 'v0.57.4';   /* v0.57.4: flowType pkce EXPLÍCITO (el default implicit ignoraba los tokens del regreso) · v0.57.3: replay con sesión viva → «Ya estás dentro» */
+    const VER_PORTAL = 'v0.57.5';   /* v0.57.5: el sello flotante de Netlify (#nl-badge-frame) se oculta por CSS · v0.57.4: flowType pkce EXPLÍCITO (el default implicit ignoraba los tokens del regreso) · v0.57.3: replay con sesión viva → «Ya estás dentro» */
     const PORTAL_CFG = { url: 'https://pshtfyodoxxyzpwgmpoj.supabase.co', key: 'sb_publishable_uPUVWtNJl55Ft5QwfmWmfA_0dFvcQgH' };
 
     const I18N_PORTAL = {

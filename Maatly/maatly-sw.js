@@ -1,4 +1,4 @@
-/* Maatly — service worker (v0.62)
+/* Maatly — service worker (v0.62.1)
    1) NOTIFICACIONES (intacto desde v0.55/v0.57): install/activate mínimos + notificationclick
       (cierra la notificación, enfoca un cliente abierto y le pasa {maatlyNotifClick: vista};
       si no hay ninguno, abre './'). El fetch passthrough de v0.57 era lo que hacía que Chrome/Edge
@@ -14,8 +14,10 @@
         se guarda como respuesta «opaque» (modo no-cors). Las libs van pinneadas por versión con SRI.
       - Todo lo demás (Supabase, APIs) pasa DIRECTO a la red, sin tocar.
     OJO al publicar: subir CACHE (maatly-shell-vX) — el activate borra los viejos SOLO si el nuevo
-    tiene shell (si el precache falló, los viejos se conservan y la app sigue abriendo offline). */
-var CACHE = 'maatly-shell-v0.62';
+    tiene shell (si el precache falló, los viejos se conservan y la app sigue abriendo offline).
+    v0.62.1: CACHE sube a maatly-shell-v0.62.1 a propósito — el HTML cambió (se oculta el sello de
+    Netlify) y así los aparatos que ya tenían v0.62 re-precahean el shell en cuanto abren online. */
+var CACHE = 'maatly-shell-v0.62.1';
 
 /* Alias con los que puede llegar la navegación: TWA start_url '/maatly', Pages '/Maatly.html',
    raíz del sitio. Se precachean TODOS con el mismo HTML. */
