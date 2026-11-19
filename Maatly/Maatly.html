@@ -5,9 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- v0.44: la CSP va ANTES de cualquier recurso; si va despues, no gobierna lo ya cargado. -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net https://openrouter.ai https://generativelanguage.googleapis.com https://api.z.ai https://api.telegram.org https://ntfy.sh https://*.supabase.co wss://*.supabase.co; frame-src 'self' blob: data:; worker-src 'self' blob: https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self';">   <!-- v0.56: + Supabase (I2a · Cuentas) -->
-    <meta name="theme-color" id="metaThemeColor" content="#090d16">
+    <meta name="theme-color" id="metaThemeColor" content="#4f46e5">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- v0.66: el manifest se declara AQUÍ. Hasta v0.65 se inyectaba al final del arranque (tras
+         montar grid, gráficas e i18n): Chrome decide si la app es INSTALABLE leyendo el manifest,
+         y si llega tarde el menú solo ofrece «Añadir a pantalla de inicio» → crea un ATAJO en
+         Custom Tab (con barra de URL) en vez del WebAPK que abre a pantalla completa. -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <script>
+        /* v0.66: service worker registrado al principio (antes: al final del arranque). Mismo
+           motivo que el manifest — la instalabilidad se decide en los primeros segundos.
+           Solo en contexto seguro: en file:// no se registra nada (el .lnk local queda limpio). */
+        (function () {
+            try {
+                var ctxSeguro = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                if (!ctxSeguro || !('serviceWorker' in navigator)) return;
+                navigator.serviceWorker.register('./maatly-sw.js').then(function (reg) {
+                    try { if (reg && reg.update) reg.update().catch(function () {}); } catch (eUp) {}
+                }).catch(function () {});
+                navigator.serviceWorker.addEventListener('message', function (ev) {
+                    try {
+                        var d = ev.data || {};
+                        /* v0.55: el clic de una notificación del sistema llega por aquí (Android) */
+                        if (d && d.maatlyNotifClick && typeof window.cambiarVista === 'function') window.cambiarVista(String(d.maatlyNotifClick));
+                    } catch (eMsg) {}
+                });
+            } catch (ePwa) {}
+        })();
+    </script>
     <title>Maatly | Tu dinero y tus metas</title>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script>
@@ -2055,7 +2081,7 @@
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div>
                                 <h4 data-i18n="ap.colores.t" class="font-bold text-slate-800 dark:text-white text-sm">Colores</h4>
-                                <p data-i18n="ap.colores.d" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Elige un tema. Se aplica al momento, solo en este dispositivo.</p>
+                                <p data-i18n="ap.colores.d" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Elige un tema. Se aplica al momento y se sincroniza con tu cuenta.</p>
                             </div>
                             <select id="selectTemaEstilo" onchange="cambiarTemaEstilo(this.value)" class="sel-maatly w-full sm:w-64 px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 shadow-sm cursor-pointer">
                                 <option value="claro" data-i18n="ap.tema.claro">Claro</option>
@@ -2349,7 +2375,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.65';   /* v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
+        const VER_APP = 'v0.66';   /* v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -2609,7 +2635,6 @@
             localStorage.setItem('notasLocales', 'Recordatorio Maatly: Revisar presupuesto de ocio y preparar presentación del proyecto.');
             localStorage.setItem('maatlyFinanzasCfg', JSON.stringify({ ingreso: 1400, ahorroObj: 350 }));
             localStorage.setItem('tasaCambio', 43.0);
-            localStorage.setItem('temaEstilo', 'gemini');
             localStorage.setItem('nombreUsuario', 'Alex');
             localStorage.removeItem('kanbanActividades');
             localStorage.removeItem('kanbanEstados');
@@ -2897,7 +2922,7 @@
         }
 
         function colorGridSegunTema() {
-            const t = localStorage.getItem('temaEstilo') || 'gemini';
+            const t = localStorage.getItem('temaEstilo') || 'claro';   /* v0.66: Claro es el tema por defecto */
             return (t === 'oscuro' || t === 'gemini') ? 'rgba(148, 163, 184, 0.14)' : 'rgba(15, 23, 42, 0.07)';
         }
         /* v0.24.10 — gráficas unificadas por tema: las 3 gráficas (doughnut del planificador,
@@ -2930,7 +2955,10 @@
                 return pct % 1 === 0 ? pct.toFixed(0) + '%' : pct.toFixed(1) + '%';
             }
         };
-        function cambiarTemaEstilo(nombreTema, silencioso = false) {
+        /* v0.66: `noGuardar` existe para el tema POR DEFECTO (Claro). Sin clave guardada no se
+           escribe nada: escribir 'claro' en un aparato nuevo lo marcaría como sucio y, al
+           sincronizar, pisaría el tema elegido en los otros aparatos. */
+        function cambiarTemaEstilo(nombreTema, silencioso = false, noGuardar = false) {
             triggerHaptic();
             htmlElement.classList.remove('dark', 'theme-office', 'theme-nature', 'theme-gemini', 'theme-jade');
             
@@ -2946,7 +2974,7 @@
                 htmlElement.classList.add('dark', 'theme-gemini');
             }
 
-            localStorage.setItem('temaEstilo', nombreTema);
+            if (!noGuardar) localStorage.setItem('temaEstilo', nombreTema);
 
             const metaTheme = document.getElementById('metaThemeColor');
             const aiCfg = BOTON_AI_TEMAS[nombreTema] || BOTON_AI_TEMAS['gemini'];
@@ -3030,6 +3058,11 @@
         const btnNavs = document.querySelectorAll('.nav-btn');
         const vistas = document.querySelectorAll('.vista-seccion');
         const headerTitulo = document.getElementById('headerTitulo');
+
+        /* v0.66: el clic de una notificación del sistema se atiende desde el <head> (donde ahora vive
+           el listener del service worker) y ese script NO comparte este ámbito. Se publica aquí la
+           única función que necesita: sin esto, en Android tocar la notificación no abría la vista. */
+        window.cambiarVista = cambiarVista;
 
         function cambiarVista(targetId, fromEdit = false) {
             if (typeof asegurarGridInicio === "function") setTimeout(asegurarGridInicio, 40);
@@ -3478,7 +3511,7 @@
                 const total = (ds && Array.isArray(ds.data)) ? ds.data.reduce((s, v) => s + (Number(v) || 0), 0) : 0;
                 const area = chart.chartArea;
                 if (!area) return;
-                const t = localStorage.getItem('temaEstilo') || 'gemini';
+                const t = localStorage.getItem('temaEstilo') || 'claro';   /* v0.66: Claro es el tema por defecto */
                 const colValor = (t === 'oscuro' || t === 'gemini') ? '#e2e8f0' : '#334155';
                 const ctx = chart.ctx;
                 const cx = (area.left + area.right) / 2, cy = (area.top + area.bottom) / 2;
@@ -3859,7 +3892,7 @@
             const resPorLabel = {};
             labels.forEach(l => { const r = datosAgrupados[l].resultado; if (r !== undefined) resPorLabel[l] = r; });
 
-            const themeKey = localStorage.getItem('temaEstilo') || 'gemini';
+            const themeKey = localStorage.getItem('temaEstilo') || 'claro';   /* v0.66: Claro por defecto */
             const barColors = BAR_CHART_TEMAS[themeKey] || BAR_CHART_TEMAS['gemini'];
             const themeColors = PALETAS_TEMAS[themeKey] || PALETAS_TEMAS['gemini'];
             const radioBarra = labels.length > 24 ? 4 : 8; /* v0.25.10: radio 8 en barras de 3-5px (histórico largo en «Todo») sale blob — 4px digno */
@@ -4736,7 +4769,7 @@
                 'su.snap.errLeer': 'No se pudo leer esa copia.',
                 'su.snap.errAplicar': 'No se pudo restaurar la copia: {m}',
                 'ap.colores.t': 'Colores',
-                'ap.colores.d': 'Elige un tema. Se aplica al momento, solo en este dispositivo.',
+                'ap.colores.d': 'Elige un tema. Se aplica al momento y se sincroniza con tu cuenta.',
                 'ap.colores.actuales': 'Colores actuales:',
                 'ap.tema.claro': 'Claro',
                 'ap.tema.oscuro': 'Oscuro',
@@ -5770,7 +5803,7 @@
                 'su.snap.errLeer': 'Could not read that copy.',
                 'su.snap.errAplicar': 'Could not restore the copy: {m}',
                 'ap.colores.t': 'Colors',
-                'ap.colores.d': 'Pick a theme. It applies instantly, on this device only.',
+                'ap.colores.d': 'Pick a theme. It applies instantly and syncs with your account.',
                 'ap.colores.actuales': 'Current colors:',
                 'ap.tema.claro': 'Light',
                 'ap.tema.oscuro': 'Dark',
@@ -6863,13 +6896,11 @@
             { code: 'GBP', nombre: 'Libra esterlina',    nombreEn: 'Pound sterling',   simbolo: '£',   decimales: 2 }
         ];
 
-        /* v0.44 (fix heredado): la siembra de la demo se llamaba en la línea ~2398, ANTES de que
-           MONEDAS existiera; en un perfil limpio (sin historialUltimate) mFmt → monedaCfgGet →
-           MONEDAS.forEach lanzaba TypeError y abortaba el resto del arranque. Se difiere hasta aquí,
-           con la capa de moneda ya definida. */
-        if (!localStorage.getItem('historialUltimate')) {
-            cargarDatosDemo(true);
-        }
+        /* v0.66 (decisión del usuario): PROHIBIDO sembrar datos de prueba en el arranque. Hasta v0.65
+           un perfil limpio recibía la demo de 21 meses; como esas claves viajan en SYNC_DEFS, la demo
+           terminaba subida a la nube y mezclada con los datos reales del usuario. Ahora la app arranca
+           en blanco y los datos llegan SOLO de la nube (sync con sesión) o los escribe el usuario.
+           La demo sigue disponible, pero SOLO por el botón manual de Ajustes → Datos (cargarDatosDemo). */
 
         function monedaCfgGet() {
             var c = {};
@@ -8112,7 +8143,14 @@
             const hoy = new Date();
             const mesHoy = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
             const mesAct = localStorage.getItem('maatlyMesActivo');
-            if (!mesAct) { localStorage.setItem('maatlyMesActivo', mesHoy); return []; }
+            /* v0.66: en un perfil LIMPIO no se escribe el mes activo. Esa escritura marca la clave
+               como sucia y, al entrar con sesión, un aparato recién instalado pisaría en la nube el
+               mes real del usuario (LWW con fecha de ahora). El puntero se crea solo cuando ya hay
+               datos propios (o cuando la nube lo trae por sync). */
+            if (!mesAct) {
+                if (!localStorage.getItem('historialUltimate') && !localStorage.getItem('maatlyMovimientos')) return [];
+                localStorage.setItem('maatlyMesActivo', mesHoy); return [];
+            }
             if (mesAct === mesHoy) return [];
             const avisos = [];
             let cursor = new Date(Number(mesAct.slice(0, 4)), Number(mesAct.slice(5, 7)) - 1, 1);
@@ -11427,8 +11465,10 @@
                 } catch (e) { console.warn('[i18n] calendario falló:', e && e.message); }
             });
 
-            const temaGuardado = localStorage.getItem('temaEstilo') || 'gemini';
-            cambiarTemaEstilo(temaGuardado, true);
+            /* v0.66: el tema CLARO es el predeterminado (decisión del usuario) y viaja por la sync.
+               Si este navegador no tiene tema guardado se aplica Claro SIN escribirlo (ver noGuardar). */
+            const temaGuardado = localStorage.getItem('temaEstilo');
+            cambiarTemaEstilo(temaGuardado || 'claro', true, !temaGuardado);
 
             cargarTablaHistorial();
             renderizarPlanesAhorro();
@@ -14152,6 +14192,7 @@
             { k: 'kanbanEstados', t: 'arr' },
             { k: 'maatlyPerfil', t: 'obj' },
             { k: 'maatlyFinanzasCfg', t: 'obj' },
+            { k: 'temaEstilo', t: 'str' },          /* v0.66: el tema (Claro por defecto) viaja entre aparatos */
             { k: 'maatlyMesActivo', t: 'str' },
             { k: 'tasaCambio', t: 'str' }           /* clave SIN prefijo: fallback de tasa */
         ];
@@ -14372,7 +14413,12 @@
                     if (def.t === 'str') rawN = String(datos.valor == null ? '' : datos.valor);
                     else { try { rawN = JSON.stringify(datos.valor); } catch (e) { return false; } }
                     const rawA = (syncCache[k] == null) ? localStorage.getItem(k) : syncCache[k];
-                    if (rawN !== rawA) { syncEscribirLocal(k, rawN); aplico = true; if (k === 'maatlyPerfil') syncPerfilReaccionar(); }
+                    if (rawN !== rawA) {
+                        syncEscribirLocal(k, rawN); aplico = true;
+                        if (k === 'maatlyPerfil') syncPerfilReaccionar();
+                        /* v0.66: el tema llegó de otro aparato → se repinta aquí (sin reescribir la clave) */
+                        if (k === 'temaEstilo') { try { cambiarTemaEstilo(rawN, true, true); } catch (eT) {} }
+                    }
                     if (habiaSucia) {
                         syncSucia[k] = false;
                         try { const mm2 = syncMarcasGet(); if (mm2[k]) { mm2[k].sucia = 0; syncMarcasSet(mm2); } } catch (eM2) {}
@@ -14663,31 +14709,11 @@
             setTimeout(function () { try { notifRefrescar(); } catch (e) {} }, 3000);
             setTimeout(agTickNotif, 4000);
 
-            /* v0.55: PWA — manifest + service worker de notificaciones, SOLO en contexto seguro
-               (https o localhost). En file:// no se inyecta nada y no hay ruido de consola. */
-            try {
-                const ctxSeguro = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-                if (ctxSeguro) {
-                    if (!document.querySelector('link[rel="manifest"]')) {
-                        const lk = document.createElement('link');
-                        lk.rel = 'manifest'; lk.href = 'manifest.webmanifest';
-                        document.head.appendChild(lk);
-                    }
-                    if ('serviceWorker' in navigator) {
-                        /* v0.62: comprobar si hay un SW nuevo al abrir (sin esperar la ventana de 24 h),
-                           para que un arreglo del shell (offline) llegue en el siguiente arranque. */
-                        navigator.serviceWorker.register('./maatly-sw.js').then(function (reg) {
-                            try { if (reg && reg.update) reg.update().catch(function () {}); } catch (eUp) {}
-                        }).catch(function () {});
-                        navigator.serviceWorker.addEventListener('message', function (ev) {
-                            try {
-                                const d = ev.data || {};
-                                if (d && d.maatlyNotifClick && typeof cambiarVista === 'function') cambiarVista(String(d.maatlyNotifClick));
-                            } catch (eMsg) {}
-                        });
-                    }
-                }
-            } catch (ePwa) {}
+            /* v0.66: el manifest y el registro del service worker YA NO viven aquí — se mudaron al
+               <head> (ver el bloque PWA al principio del documento). Se registraban al final del
+               arranque y, en un teléfono, Chrome no veía la app instalable a tiempo: el menú ofrecía
+               «Añadir a pantalla de inicio» y creaba un atajo en Custom Tab (con barra de URL) en vez
+               del WebAPK a pantalla completa. */
         })();
 
         /* ================= FIN AGENTE MAATLY (v0.8) ================= */
