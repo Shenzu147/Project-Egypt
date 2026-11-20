@@ -2418,7 +2418,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.68';   /* v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
+        const VER_APP = 'v0.69';   /* v0.69: la sync propaga EDICIONES — LWW por ítem (`mod` ISO sellado al guardar; gana el más nuevo, las tumbas siguen mandando; sin `mod` gana el local) · v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -14547,9 +14547,12 @@
            - arrays      → datos = { items: [...], tumbas: [{id, ts}] }
            - objetos/str → datos = { valor: ... }
            El localStorage sigue siendo el cache del aparato: offline 100 % funcional.
-           Merge de arrays = UNIÓN por id (local gana si el mismo id difiere) y las
-           tumbas evitan resucitar borrados. Objetos/str = LWW honesto: el remoto
-           manda salvo que exista cambio local posterior al último pull. */
+           Merge de arrays (v0.69) = UNIÓN por id + LWW POR ÍTEM: cada ítem guarda `mod`
+           (ISO) y, si el mismo id difiere, gana el `mod` más nuevo (sin `mod` → gana el
+           local, compatibilidad). Antes ganaba el local siempre y editar un registro ya
+           sincronizado no viajaba. Las tumbas siguen ganando a cualquier `mod`.
+           Objetos/str = LWW honesto: el remoto manda salvo que exista cambio local
+           posterior al último pull. */
 
         const SYNC_DEFS = [
             { k: 'maatlyMovimientos', t: 'arr' },
@@ -14614,12 +14617,60 @@
             try { const raw = localStorage.getItem(d.k); syncCache[d.k] = (raw == null) ? null : String(raw); } catch (e) { syncCache[d.k] = null; }
         });
 
+        /* ---------- v0.69 · LWW POR ÍTEM (opción A) ----------
+           Cada ítem de un array de sync lleva `mod` (ISO) con su última edición. Sirve para
+           que renombrar/editar un registro YA sincronizado viaje al otro aparato: antes el
+           merge se quedaba con la copia local y el aparato con datos viejos podía revertir.
+           Riesgo asumido: depende del reloj de cada aparato (un desfase de minutos es
+           tolerable). Las tumbas siguen ganando por encima de cualquier `mod`. */
+        function syncModMs(x) {
+            const t = (x && x.mod) ? Date.parse(x.mod) : 0;
+            return isNaN(t) ? 0 : t;
+        }
+
+        /* Compara dos ítems ignorando `mod`: distingue un cambio real de un simple sello. */
+        function syncSinMod(x) {
+            if (!x || typeof x !== 'object') return JSON.stringify(x);
+            const o = {};
+            Object.keys(x).filter(function (kk) { return kk !== 'mod'; }).sort().forEach(function (kk) { o[kk] = x[kk]; });
+            return JSON.stringify(o);
+        }
+
+        /* Sella `mod` en los ítems nuevos o editados y devuelve el raw definitivo. A los
+           ítems intactos se les REUSA el `mod` previo: sin eso, un guardado que reescribe el
+           array entero borraría los sellos y el ítem perdería su fecha de edición. */
+        function syncSellarItems(k, antes, ahoraStr) {
+            if (typeof antes !== 'string' || !antes || antes === ahoraStr) return ahoraStr;
+            let viejos, nuevos;
+            try { viejos = JSON.parse(antes); nuevos = JSON.parse(ahoraStr); } catch (e) { return ahoraStr; }
+            if (!Array.isArray(viejos) || !Array.isArray(nuevos)) return ahoraStr;
+            const porIdViejo = {};
+            viejos.forEach(function (x) { if (x && x.id != null) porIdViejo[String(x.id)] = x; });
+            const ahoraISO = new Date().toISOString();
+            let sellados = 0, heredados = 0;
+            nuevos.forEach(function (x) {
+                if (!x || x.id == null || typeof x !== 'object') return;
+                const viejo = porIdViejo[String(x.id)];
+                if (!viejo) { x.mod = ahoraISO; sellados++; return; }          /* ítem nuevo */
+                if (syncSinMod(viejo) === syncSinMod(x)) {                     /* sin cambios reales */
+                    if (viejo.mod && !x.mod) { x.mod = viejo.mod; heredados++; }
+                    return;
+                }
+                x.mod = ahoraISO; sellados++;                                  /* editado */
+            });
+            if (!sellados && !heredados) return ahoraStr;
+            const raw = JSON.stringify(nuevos);
+            syncEscribirLocal(k, raw);   /* deja el sello en disco sin re-disparar el hook */
+            return raw;
+        }
+
         function syncDespuesGuardar(k, vStr) {
             if (syncSile) return;
             const def = SYNC_MAP[k];
             if (!def) return;
             const antes = syncCache[k];
-            const ahora = String(vStr == null ? '' : vStr);
+            let ahora = String(vStr == null ? '' : vStr);
+            if (def.t === 'arr') ahora = syncSellarItems(k, antes, ahora);   /* v0.69: sella `mod` por ítem */
             syncCache[k] = ahora;
             if (!syncSucia[k]) { syncSucia[k] = true; syncSuciaDesde[k] = Date.now(); }
             const m = syncMarcasGet();
@@ -14724,22 +14775,34 @@
             return lista;
         }
 
+        /* Merge de arrays: unión por id + LWW POR ÍTEM (v0.69).
+           `ganoLocal` cuenta los ítems donde la copia local es MÁS NUEVA que la remota: la
+           nube quedó corta y hay que volver a subir la versión ganadora. */
         function syncMergeArray(local, remotoItems, tumbasTodas) {
             const tombs = {};
             (Array.isArray(tumbasTodas) ? tumbasTodas : []).forEach(function (t) { if (t && t.id != null) tombs[String(t.id)] = true; });
             const porId = {};
             (Array.isArray(local) ? local : []).forEach(function (x) { if (x && x.id != null) porId[String(x.id)] = x; });
-            let conflictos = 0;
+            let conflictos = 0, ganoLocal = 0;
             (Array.isArray(remotoItems) ? remotoItems : []).forEach(function (x) {
                 if (!x || x.id == null) return;
                 const id = String(x.id);
-                if (porId[id]) {
-                    if (JSON.stringify(porId[id]) !== JSON.stringify(x)) { conflictos++; console.warn('[Sync] mismo id con contenido distinto — gana el local:', id); }
-                } else porId[id] = x;
+                const mio = porId[id];
+                if (!mio) { porId[id] = x; return; }                        /* nuevo para este aparato */
+                if (syncSinMod(mio) === syncSinMod(x)) {
+                    /* misma data: si el remoto trae el sello y el local no, se adopta */
+                    if (!syncModMs(mio) && syncModMs(x)) porId[id] = x;
+                    return;
+                }
+                conflictos++;
+                const mr = syncModMs(x), ml = syncModMs(mio);
+                if (mr > ml) porId[id] = x;                                 /* gana el remoto (más nuevo) */
+                else if (ml > mr) { ganoLocal++; console.warn('[Sync] edición local más nueva, se conserva:', id); }
+                else console.warn('[Sync] mismo id con contenido distinto y sin «mod» — gana el local:', id);
             });
             const salida = [];
             Object.keys(porId).forEach(function (id) { if (!tombs[id]) salida.push(porId[id]); });
-            return { items: salida, conflictos: conflictos };
+            return { items: salida, conflictos: conflictos, ganoLocal: ganoLocal };
         }
 
         function syncEscribirLocal(k, raw) {
@@ -14776,6 +14839,16 @@
                 const rawN = JSON.stringify(uni.items);
                 const rawA = (syncCache[k] == null) ? JSON.stringify(local) : syncCache[k];
                 if (rawN !== rawA) { syncEscribirLocal(k, rawN); aplico = true; }
+                /* v0.69: si este aparato tiene ediciones MÁS NUEVAS que la nube, la fila
+                   remota se queda corta → se marca sucia y sube la versión ganadora. Sin
+                   esto la nube se estanca en la copia vieja y la edición se perdería. */
+                if (uni.ganoLocal > 0) {
+                    if (!syncSucia[k]) { syncSucia[k] = true; syncSuciaDesde[k] = Date.now(); }
+                    marca.sucia = 1;
+                    marca.ts = Date.now();
+                    marca.suciaDesde = syncSuciaDesde[k] || Date.now();
+                    syncProgramarEmpuje();
+                }
             } else {
                 /* LWW honesto: gana el más nuevo — último cambio local (syncSuciaDesde) vs actualizado_en remoto.
                    Si el remoto descarta cambios locales sucios, avisa con el toast de conflicto. */
@@ -14838,6 +14911,10 @@
         }
 
         function syncRepintar() {
+            /* v0.69: el tablero guarda copia en memoria (kanbanActividades/kanbanEstados) y una
+               edición llegada de otro aparato no se vería hasta recargar → se invalida aquí
+               para que el siguiente repintado lea el localStorage ya mezclado. */
+            try { kanbanActividades = null; kanbanEstados = null; } catch (eK) {}
             try { actualizarKPIs(); } catch (e) {}
             try { renderizarPlanesAhorro(); } catch (e) {}
             try { renderizarMovimientos(); } catch (e) {}
