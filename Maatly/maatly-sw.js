@@ -1,4 +1,4 @@
-/* Maatly - service worker (v0.72)
+/* Maatly - service worker (v0.73)
    1) NOTIFICACIONES (intacto desde v0.55/v0.57): install/activate mínimos + notificationclick
       (cierra la notificación, enfoca un cliente abierto y le pasa {maatlyNotifClick: vista};
       si no hay ninguno, abre './'). El fetch passthrough de v0.57 era lo que hacía que Chrome/Edge
@@ -10,8 +10,8 @@
         desde el texto. Sin esto el shell nunca entraba al caché y el TWA daba ERR_FAILED offline.
       - Navegación: NETWORK-FIRST con tope de 6 s (con red siempre ves el build fresco; el caché
         es el salvavidas offline y se refresca solo en cada visita online).
-      - CDN: CACHE-FIRST. jsdelivr/fuentes van con CORS; cdn.tailwindcss.com NO manda CORS, así que
-        se guarda como respuesta «opaque» (modo no-cors). Las libs van pinneadas por versión con SRI.
+      - CDN: CACHE-FIRST. jsdelivr/fuentes van con CORS y se guardan normales; las libs van
+        pinneadas por versión con SRI. v0.73: Tailwind se autohospeda (PROPIOS, con SRI propio).
       - Todo lo demás (Supabase, APIs) pasa DIRECTO a la red, sin tocar.
     OJO al publicar: subir CACHE (maatly-shell-vX) — el activate borra los viejos SOLO si el nuevo
     tiene shell (si el precache falló, los viejos se conservan y la app sigue abriendo offline).
@@ -32,15 +32,20 @@
     v0.71: la campana muestra los históricos de vencida/recordatorio con el título actual
            de la actividad (reevaluación al pintar).
     v0.72: «atrás de verdad» — clic derecho y Esc suben un nivel del calendario en PC y el
-           gesto/botón atrás de Android sube el nivel antes de salir de la app. */
-var CACHE = 'maatly-shell-v0.72';
+           gesto/botón atrás de Android sube el nivel antes de salir de la app.
+    v0.73: P0 del informe — chat del modelo escapado, zoom desbloqueado y Tailwind
+           autohospedado (tailwind-3.4.17.js, con integrity y precacheado). */
+var CACHE = 'maatly-shell-v0.73';
 
 /* Alias con los que puede llegar la navegación: TWA start_url '/maatly', Pages '/Maatly.html',
    raíz del sitio. Se precachean TODOS con el mismo HTML. */
 var SHELL_ALIAS = ['./Maatly.html', './maatly', './'];
 
-/* Recursos propios que se guardan tal cual (mismo origen). */
-var PROPIOS = ['./manifest.webmanifest', './icono-512.png'];
+/* Recursos propios que se guardan tal cual (mismo origen).
+   v0.73: + tailwind-3.4.17.js — el runtime de Tailwind se AUTOHOSPEDA (P0·H4 del informe:
+   cdn.tailwindcss.com no manda CORS y no admite SRI; en propio origen carga con integrity,
+   se precachea como recurso propio y deja de depender del CDN). */
+var PROPIOS = ['./manifest.webmanifest', './icono-512.png', './tailwind-3.4.17.js'];
 
 /* CDN fijados del <head> (versión + SRI; NUNCA cambiar aquí sin cambiar el HTML)
    + la hoja de Google Fonts (los .woff2 se cachean solos en la primera visita online). */
@@ -55,10 +60,10 @@ var CDN = [
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800&display=swap'
 ];
 
-/* Tailwind se sirve como script sin CORS: hay que guardarlo en modo no-cors (respuesta opaca). */
-var CDN_OPACO = ['https://cdn.tailwindcss.com/3.4.17'];
+/* v0.73: ya no hay CDNs opacos — cdn.tailwindcss.com salió del HTML (autohospedado en PROPIOS). */
+var CDN_OPACO = [];
 
-var RS = /(^|\.)(jsdelivr\.net|cdnjs\.cloudflare\.com|cdn\.tailwindcss\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
+var RS = /(^|\.)(jsdelivr\.net|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
 
 function urlDe(rel) {
     try { return new URL(rel, self.registration.scope).href; } catch (e) { return rel; }

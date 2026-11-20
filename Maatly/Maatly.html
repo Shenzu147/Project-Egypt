@@ -2,9 +2,9 @@
 <html lang="es" class="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">   <!-- v0.73 (P0·H5 del informe): fuera maximum-scale=1.0 y user-scalable=no — bloqueaban el zoom (WCAG 2.1, 1.4.4). El auto-zoom de iOS en campos se resuelve con fuente de 16px en móvil (regla al final de la hoja propia), no con el bloqueo global. -->
     <!-- v0.44: la CSP va ANTES de cualquier recurso; si va despues, no gobierna lo ya cargado. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net https://openrouter.ai https://generativelanguage.googleapis.com https://api.z.ai https://api.telegram.org https://ntfy.sh https://*.supabase.co wss://*.supabase.co; frame-src 'self' blob: data:; worker-src 'self' blob: https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self';">   <!-- v0.56: + Supabase (I2a · Cuentas) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net https://openrouter.ai https://generativelanguage.googleapis.com https://api.z.ai https://api.telegram.org https://ntfy.sh https://*.supabase.co wss://*.supabase.co; frame-src 'self' blob: data:; worker-src 'self' blob: https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self';">   <!-- v0.73: - cdn.tailwindcss.com de script-src (Tailwind autohospedado, P0·H4 del informe) · v0.56: + Supabase (I2a · Cuentas) -->
     <meta name="theme-color" id="metaThemeColor" content="#4f46e5">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -35,7 +35,7 @@
         })();
     </script>
     <title>Maatly | Tu dinero y tus metas</title>
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="tailwind-3.4.17.js"></script>   <!-- v0.73 (P0·H4 del informe): Tailwind AUTOHOSPEDADO — cdn.tailwindcss.com no manda CORS y no admite SRI (informe H4/H11); el mismo JS de 3.4.17 (407.279 B, contenido estable verificado) vive en el repo y lo precachea el SW. SIN integrity a propósito: en file:// el origen es opaco y el SRI bloquearía el script (probado — humo v0.73); el riesgo que cerraba el SRI (CDN adulterado) desaparece al servirlo de propio origen bajo CSP script-src 'self'. Al actualizar Tailwind: reemplazar el archivo y subir el CACHE del SW. -->
     <script>
         tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'], display: ['Manrope', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] } } } }
     </script>
@@ -793,6 +793,18 @@
             #listaMovimientosWidget > div > div:last-child > span:first-child {
                 order: 3; flex: 0 0 100%; text-align: right; white-space: nowrap;
                 font-size: .75rem !important; line-height: 1.2;
+            }
+        }
+
+        /* v0.73 (P0·H5 del informe): con el zoom desbloqueado, el auto-zoom de iOS sobre campos con
+           fuente < 16px se resuelve aquí — 16px en campos de móvil. EXCEPTOS: los compactos de las
+           filas del panel (sel-maatly-pill, kb-seg…) y selects del calendario, que romperían su fila;
+           esos no reciben foco de teclado con teclado de texto en la práctica habitual. */
+        @media (max-width: 767.98px) {
+            input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']),
+            textarea,
+            select:not(.sel-maatly-pill):not(.kb-seg):not(#selPerActividades) {
+                font-size: 16px;
             }
         }
 </style>
@@ -2426,7 +2438,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.72';   /* v0.72: «atrás de verdad» — clic derecho y Esc suben un nivel del calendario en PC (eventos conservan su menú nativo), y el gesto/botón atrás de Android sube el nivel antes de salir (rastro pushState/popstate por calZoomHacia, mismo patrón mDlg; modales primero) · v0.71: la campana muestra los históricos de vencida/recordatorio con el título ACTUAL de la actividad (reevaluación al pintar; el snapshot interno queda intacto) · v0.70: el widget de Actividades del panel abre el DETALLE de la tarea/evento al tocar la fila (modal actual) + selector de período propio Hoy/Mes/Año/Todo (viaja en el perfil; en «Todo» entran las cerradas y las de meses pasados) · v0.69: la sync propaga EDICIONES — LWW por ítem (`mod` ISO sellado al guardar; gana el más nuevo, las tumbas siguen mandando; sin `mod` gana el local) · v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
+        const VER_APP = 'v0.73';   /* v0.73: «P0 del informe» — H1: el texto del modelo del chat sale ESCAPADO (era entrada no confiable; una vía real de inyección vía adjuntos) · H5: zoom desbloqueado (fuera maximum-scale/user-scalable, WCAG 1.4.4; 16px en campos de móvil) · H4: Tailwind AUTOHOSPEDADO con integrity (el CDN no manda CORS y no admite SRI) · v0.72: «atrás de verdad» — clic derecho y Esc suben un nivel del calendario en PC (eventos conservan su menú nativo), y el gesto/botón atrás de Android sube el nivel antes de salir (rastro pushState/popstate por calZoomHacia, mismo patrón mDlg; modales primero) · v0.71: la campana muestra los históricos de vencida/recordatorio con el título ACTUAL de la actividad (reevaluación al pintar; el snapshot interno queda intacto) · v0.70: el widget de Actividades del panel abre el DETALLE de la tarea/evento al tocar la fila (modal actual) + selector de período propio Hoy/Mes/Año/Todo (viaja en el perfil; en «Todo» entran las cerradas y las de meses pasados) · v0.69: la sync propaga EDICIONES — LWW por ítem (`mod` ISO sellado al guardar; gana el más nuevo, las tumbas siguen mandando; sin `mod` gana el local) · v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -12927,7 +12939,7 @@
             const div = document.createElement('div');
             let chips = '';
             (adjuntos || []).forEach(a => {
-                if (a.tipo === 'imagen' && a.dataURL) chips += `<img src="${a.dataURL}" class="w-16 h-16 object-cover rounded-lg border border-white/40 mt-2 inline-block">`;
+                if (a.tipo === 'imagen' && a.dataURL) chips += `<img src="${a.dataURL}" class="w-16 h-16 object-cover rounded-lg border border-white/40 mt-2 inline-block">`;   /* v0.73: el dataURL viene de un archivo elegido por el USUARIO en su propio disco — suposición aceptada (informe P0·H1); el nombre sí se escapa */
                 else chips += `<span class="text-xs bg-black/20 rounded px-2 py-0.5 mt-2 inline-block mr-1">${agEscape(a.nombre || 'archivo')}</span>`;
             });
             if (sender === 'user') {
@@ -12935,7 +12947,11 @@
                 div.innerHTML = `<div class="bg-indigo-600 text-white p-3 rounded-2xl rounded-tr-none shadow-sm text-sm">${agEscape(text)}${chips}</div>`;
             } else {
                 div.className = 'flex items-start gap-2 max-w-[85%]';
-                div.innerHTML = `<div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-sm border border-indigo-200 dark:border-indigo-800 flex-shrink-0"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 8h12a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8V4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h.01M15 13h.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6"></path></svg></div><div class="bg-white dark:bg-slate-700 p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 dark:border-slate-600 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-line">${text}</div>`;
+                /* v0.73 (P0·H1 del informe): TODO el texto de 'ai' es ENTRADA NO CONFIABLE — se escapa
+                   y se formatea (markdown → strong/br) AQUÍ, punto único de saneo. Antes el modelo se
+                   escapaba en generarRespuestaAgente pero el fallback y los errores llegaban crudos;
+                   y el escape original estaba aguas arriba, fuera de la vista. */
+                div.innerHTML = `<div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-sm border border-indigo-200 dark:border-indigo-800 flex-shrink-0"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 8h12a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8V4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h.01M15 13h.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6"></path></svg></div><div class="bg-white dark:bg-slate-700 p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 dark:border-slate-600 text-sm text-slate-700 dark:text-slate-200">${agFormatearRespuesta(text)}</div>`;
             }
             chatMessages.appendChild(div); chatMessages.scrollTop = chatMessages.scrollHeight;
         }
@@ -13801,7 +13817,7 @@
                     texto += '\n\n' + ti('ag.fb.notaImg');
                 }
                 const fb = await fallbackRespuestaLocal(texto, document.getElementById('lblRestanteInicio') ? document.getElementById('lblRestanteInicio').textContent : '—', document.getElementById('kpiGastoPromedio') ? document.getElementById('kpiGastoPromedio').textContent : '—');
-                return fb + '<br><span class="text-[11px] opacity-70">' + ti('ag.fb.pie') + '</span>';
+                return fb + '\n' + ti('ag.fb.pie');   /* v0.73: texto PLANO — appendMessage escapa TODO el texto de 'ai' (H1), así que el HTML propio del pie saldría como etiquetas literales; whitespace-pre-line pinta el salto */
             }
 
             let contenidoTexto = pregunta || ti('ag.fb.soloAdj');
@@ -13843,7 +13859,7 @@
                 else if (Array.isArray(msg.content)) texto = msg.content.filter(p => p.type === 'text').map(p => p.text).join('\n');
                 const limpio = agEjecutarAcciones(texto);
                 historialChat.push({ role: 'assistant', content: limpio });
-                return agFormatearRespuesta(limpio);
+                return limpio;   /* v0.73: texto CRUDO — el escape + markdown (agFormatearRespuesta) lo hace appendMessage, punto único de saneo (P0·H1 del informe) */
             } catch (e) {
                 console.warn('agente error', e);
                 return tiPlantilla('ag.chat.errRed', { n: agEscape(modelo.nombre) });
