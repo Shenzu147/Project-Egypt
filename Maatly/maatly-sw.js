@@ -1,4 +1,4 @@
-/* Maatly — service worker (v0.67)
+/* Maatly — service worker (v0.68)
    1) NOTIFICACIONES (intacto desde v0.55/v0.57): install/activate mínimos + notificationclick
       (cierra la notificación, enfoca un cliente abierto y le pasa {maatlyNotifClick: vista};
       si no hay ninguno, abre './'). El fetch passthrough de v0.57 era lo que hacía que Chrome/Edge
@@ -22,8 +22,10 @@
     v0.66: arranque en blanco (sin demo), tema Claro por defecto y sincronizado, manifest + SW en el
            <head> (instalación como WebAPK, no atajo) e icono de 192.
     v0.67: el tablero se mueve con el dedo (pill «Mover a…», aviso de Cierre, Deshacer) y el arrastre
-           entre columnas queda como atajo apagado por defecto en el móvil. */
-var CACHE = 'maatly-shell-v0.67';
+           entre columnas queda como atajo apagado por defecto en el móvil.
+    v0.68: «cerrar en un toque» — la ✓ de la tarjeta y de la lista del panel manda la actividad
+           directo a la columna de Cierre. */
+var CACHE = 'maatly-shell-v0.68';
 
 /* Alias con los que puede llegar la navegación: TWA start_url '/maatly', Pages '/Maatly.html',
    raíz del sitio. Se precachean TODOS con el mismo HTML. */

@@ -290,6 +290,14 @@
         .dark .kb-del:hover { color: var(--c-alarma); background: var(--c-alarma-suave); }
         /* v0.25.33: chip «Cierre» — columna marcada, tokens del tema */
         .kb-chip-cierre { flex-shrink: 0; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; padding: 2.5px 8px; border-radius: 999px; background: var(--c-info-suave); color: var(--c-info); }
+        /* v0.68 «Cerrar en un toque»: la ✓ del pie de la tarjeta manda la actividad a la columna
+           de Cierre sin abrir la hoja. Área táctil de 36px con un ::after invisible (lección
+           v0.61: nunca min-width, que parte la fila). */
+        .kb-cerrar { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 2px; border-radius: 9999px; color: #94a3b8; transition: color .2s var(--m-ease), background .2s var(--m-ease); }
+        .kb-cerrar::after { content: ''; position: absolute; inset: -7px -4px; border-radius: 9999px; }
+        .kb-cerrar:hover { color: #059669; background: rgba(5,150,105,.12); }
+        .dark .kb-cerrar { color: #64748b; }
+        .dark .kb-cerrar:hover { color: #34d399; background: rgba(52,211,153,.16); }
         /* v0.25.35: tarjetas pausadas — grises y sin empuje */
         .kb-pausada { opacity: .6; }
         /* ===== v0.12: DIÁLOGOS MAATLY ===== */
@@ -2410,7 +2418,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.67';   /* v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
+        const VER_APP = 'v0.68';   /* v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -5033,6 +5041,10 @@
                 'kb.board.dragTitle': 'Arrastrar tarjetas entre columnas (opcional; en el móvil está apagado por defecto)',
                 'kb.toast.dragOn': 'Arrastre entre columnas: activado',
                 'kb.toast.dragOff': 'Arrastre entre columnas: apagado — usa «Mover a…» en cada tarjeta',
+                /* v0.68 — cerrar en un toque (limpiar atraso sin abrir la hoja) */
+                'kb.cerrar': 'Cerrar',
+                'kb.cerrarTitle': 'Cerrar y mandar a la columna de Cierre',
+                'kb.cerrarAria': 'Cerrar «{t}»',
                 'kb.badge.pausaTitle': 'En pausa — gris y sin aviso',
                 'kb.badge.pausada': 'Pausada',
                 'kb.badge.sinFecha': 'sin fecha',
@@ -6086,6 +6098,10 @@
                 'kb.board.dragTitle': 'Drag cards between columns (optional; off by default on mobile)',
                 'kb.toast.dragOn': 'Drag between columns: on',
                 'kb.toast.dragOff': 'Drag between columns: off — use "Move to…" on each card',
+                /* v0.68 — complete in one tap (clear the backlog without opening the sheet) */
+                'kb.cerrar': 'Complete',
+                'kb.cerrarTitle': 'Complete and send to the Closing column',
+                'kb.cerrarAria': 'Complete "{t}"',
                 'kb.badge.pausaTitle': 'On pause — gray and silent',
                 'kb.badge.pausada': 'Paused',
                 'kb.badge.sinFecha': 'no date',
@@ -9382,6 +9398,7 @@
             if (!cont) return;
 
             const estados = kbGetEstados();
+            const idCierreW = kbIdCierre();   /* v0.68: la ✓ «cerrar» del widget no aparece si ya está en Cierre */
             // v0.13: filtro por estado (dinámico) + vencidas, y orden por fecha / nombre / estado
             let acts = kbGetActividades();
             const totalActs = acts.length;
@@ -9428,6 +9445,7 @@
                                 <select onchange="kbWidgetEstado('${a.id}', this.value)" class="sel-maatly sel-maatly-pill text-xs font-extrabold px-2 py-0.5 rounded-full border cursor-pointer focus:outline-none bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700">
                                     ${estados.map(e => `<option value="${e.id}" ${e.id === a.estadoId ? 'selected' : ''}>${kbEscape(e.nombre)}</option>`).join('')}
                                 </select>
+                                ${idCierreW && a.estadoId !== idCierreW ? `<button type="button" class="kb-cerrar flex-shrink-0" title="${ti('kb.cerrarTitle')}" aria-label="${kbEscape(tiPlantilla('kb.cerrarAria', { t: a.titulo }))}" onclick="event.stopPropagation(); kbCompletarRapido('${a.id}')"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg></button>` : ''}
                             </div>
                         </div>
                     </div>
@@ -10230,6 +10248,36 @@
                 '</button>';
         }
 
+        /* ---------- v0.68 · «Cerrar en un toque» ----------
+           Para limpiar atraso (tareas del mes pasado) sin abrir la hoja ni recorrer estados:
+           la ✓ manda la tarjeta DIRECTO a la columna marcada como Cierre.
+           No duplica reglas: pasa por kbMoverTarjeta, así que hereda el aviso de dinero
+           («No volver a preguntar»), la reactivación de pausadas, la recurrencia y el
+           «Deshacer» del toast cuando la operación no creó dinero ni tarjetas. */
+        function kbIdCierre() {
+            const estados = kbGetEstados();
+            if (!estados || !estados.length) return null;
+            const cierre = estados.find(function(e) { return e.esCierre; }) || estados[estados.length - 1];   /* v0.25.33: manda la marcada */
+            return cierre ? cierre.id : null;
+        }
+
+        function kbCompletarRapido(id) {
+            const idC = kbIdCierre();
+            if (!idC) return false;
+            triggerHaptic();
+            return kbMoverTarjeta(id, idC);
+        }
+
+        function kbBtnCerrarHTML(act) {
+            const idC = kbIdCierre();
+            if (!idC || !act || act.estadoId === idC) return '';   /* ya está en Cierre: no hay nada que cerrar */
+            return '<button type="button" class="kb-cerrar flex-shrink-0" ' +
+                'onclick="event.stopPropagation(); kbCompletarRapido(\'' + act.id + '\')" ' +
+                'title="' + kbEscape(ti('kb.cerrarTitle')) + '" aria-label="' + kbEscape(tiPlantilla('kb.cerrarAria', { t: act.titulo })) + '">' +
+                '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>' +
+                '</button>';
+        }
+
         /* ---------- Arrastre como atajo ---------- */
         function kbPintarDragBtn() {
             const b = document.getElementById('btnKbDrag');
@@ -10268,7 +10316,7 @@
                     '</button>' +
                 '</div>' +
                 (act.notas ? '<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">' + kbEscape(act.notas) + '</p>' : '') +
-                '<div class="flex items-center gap-1.5 mt-2 flex-wrap">' + kbPillEstadoHTML(act) + kbBadgePausadaHTML(act) + kbBadgeFechaHTML(act) + kbBadgeMontoHTML(act) + kbBadgeRecurrenciaHTML(act) + '</div>' +
+                '<div class="flex items-center gap-1.5 mt-2 flex-wrap">' + kbPillEstadoHTML(act) + kbBtnCerrarHTML(act) + kbBadgePausadaHTML(act) + kbBadgeFechaHTML(act) + kbBadgeMontoHTML(act) + kbBadgeRecurrenciaHTML(act) + '</div>' +
                 '</div>';
         }
 
@@ -10355,7 +10403,7 @@
                     scrollSpeed: 12,
                     bubbleScroll: true,
                     preventOnFilter: false,
-                    filter: '.kb-pill-estado, .kb-del, .kb-dot, .kb-count',
+                    filter: '.kb-pill-estado, .kb-cerrar, .kb-del, .kb-dot, .kb-count',
                     onStart: kbDragInicio,
                     onEnd: kbOnTarjetaSoltada
                 }));
