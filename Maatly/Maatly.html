@@ -2426,7 +2426,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.70';   /* v0.70: el widget de Actividades del panel abre el DETALLE de la tarea/evento al tocar la fila (modal actual) + selector de período propio Hoy/Mes/Año/Todo (viaja en el perfil; en «Todo» entran las cerradas y las de meses pasados) · v0.69: la sync propaga EDICIONES — LWW por ítem (`mod` ISO sellado al guardar; gana el más nuevo, las tumbas siguen mandando; sin `mod` gana el local) · v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
+        const VER_APP = 'v0.71';   /* v0.71: la campana muestra los históricos de vencida/recordatorio con el título ACTUAL de la actividad (reevaluación al pintar; el snapshot interno queda intacto) · v0.70: el widget de Actividades del panel abre el DETALLE de la tarea/evento al tocar la fila (modal actual) + selector de período propio Hoy/Mes/Año/Todo (viaja en el perfil; en «Todo» entran las cerradas y las de meses pasados) · v0.69: la sync propaga EDICIONES — LWW por ítem (`mod` ISO sellado al guardar; gana el más nuevo, las tumbas siguen mandando; sin `mod` gana el local) · v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -14011,12 +14011,25 @@
             }
 
             // 4) Historial de notificaciones enviadas por el sistema
+            /* v0.71: los históricos que apuntan a una actividad VIVA (vencida / recordatorio) se
+               reevalúan al pintar — renombrar la actividad actualiza lo que se ve en la campana.
+               El snapshot interno de maatlyNotifCentro queda intacto (registro de cuándo se envió). */
             const vivos = {};
+            const actPorId = {};
+            acts.forEach(a => { actPorId[a.id] = a; });
             items.forEach(i => { vivos[i.k] = 1; });
             historial.forEach(h => {
                 if (vivos[h.k]) return;
                 vivos[h.k] = 1;
-                items.push({ k: h.k, tp: h.tp || 'info', ref: h.ref || '', t: h.t, c: h.c, f: h.f || 0, vivo: false });
+                let t = h.t, c = h.c;
+                const act = actPorId[h.ref];
+                if (act && h.tp === 'vencida') {
+                    t = ti('ag.not.vencidaT');
+                    c = tiPlantilla('ag.not.vencidaC', { n: act.titulo });
+                } else if (act && h.tp === 'recordatorio') {
+                    t = tiPlantilla('ag.not.prevT', { n: act.titulo });   /* el cuerpo conserva la hora y el «faltaban X» del momento */
+                }
+                items.push({ k: h.k, tp: h.tp || 'info', ref: h.ref || '', t: t, c: c, f: h.f || 0, vivo: false });
             });
 
             /* v0.53: agentes en pausa — el centro no muestra nada del agente (items 'coaching', vivos ni históricos) */

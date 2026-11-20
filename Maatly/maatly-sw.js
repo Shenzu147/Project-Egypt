@@ -1,4 +1,4 @@
-/* Maatly - service worker (v0.70)
+/* Maatly - service worker (v0.71)
    1) NOTIFICACIONES (intacto desde v0.55/v0.57): install/activate mínimos + notificationclick
       (cierra la notificación, enfoca un cliente abierto y le pasa {maatlyNotifClick: vista};
       si no hay ninguno, abre './'). El fetch passthrough de v0.57 era lo que hacía que Chrome/Edge
@@ -28,8 +28,10 @@
     v0.69: la sync propaga EDICIONES — cada ítem de un array lleva `mod` (ISO) y el merge
            conserva el más nuevo (las tumbas siguen mandando).
     v0.70: el widget de Actividades del panel abre el detalle al tocar la fila y gana un
-           selector de período propio (Hoy/Mes/Año/Todo). */
-var CACHE = 'maatly-shell-v0.70';
+           selector de período propio (Hoy/Mes/Año/Todo).
+    v0.71: la campana muestra los históricos de vencida/recordatorio con el título actual
+           de la actividad (reevaluación al pintar). */
+var CACHE = 'maatly-shell-v0.71';
 
 /* Alias con los que puede llegar la navegación: TWA start_url '/maatly', Pages '/Maatly.html',
    raíz del sitio. Se precachean TODOS con el mismo HTML. */
