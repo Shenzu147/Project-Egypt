@@ -2426,7 +2426,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.71';   /* v0.71: la campana muestra los históricos de vencida/recordatorio con el título ACTUAL de la actividad (reevaluación al pintar; el snapshot interno queda intacto) · v0.70: el widget de Actividades del panel abre el DETALLE de la tarea/evento al tocar la fila (modal actual) + selector de período propio Hoy/Mes/Año/Todo (viaja en el perfil; en «Todo» entran las cerradas y las de meses pasados) · v0.69: la sync propaga EDICIONES — LWW por ítem (`mod` ISO sellado al guardar; gana el más nuevo, las tumbas siguen mandando; sin `mod` gana el local) · v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
+        const VER_APP = 'v0.72';   /* v0.72: «atrás de verdad» — clic derecho y Esc suben un nivel del calendario en PC (eventos conservan su menú nativo), y el gesto/botón atrás de Android sube el nivel antes de salir (rastro pushState/popstate por calZoomHacia, mismo patrón mDlg; modales primero) · v0.71: la campana muestra los históricos de vencida/recordatorio con el título ACTUAL de la actividad (reevaluación al pintar; el snapshot interno queda intacto) · v0.70: el widget de Actividades del panel abre el DETALLE de la tarea/evento al tocar la fila (modal actual) + selector de período propio Hoy/Mes/Año/Todo (viaja en el perfil; en «Todo» entran las cerradas y las de meses pasados) · v0.69: la sync propaga EDICIONES — LWW por ítem (`mod` ISO sellado al guardar; gana el más nuevo, las tumbas siguen mandando; sin `mod` gana el local) · v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -11343,6 +11343,14 @@
                 { vista: 'timeGridWeek' }
             ];
             let calAnimPendiente = null;
+            /* v0.72: rastro del calendario en el historial — el gesto/botón «atrás» de Android sube
+               un nivel (Semana→Mes→Año) antes de salir de la app; mismo patrón mDlg (pushState/popstate).
+               calProfHist = entradas del calendario vivas en la pila (0 = base Mes; 1 = Semana o Año).
+               calSaltoHistorial = popstate que viene de un consumo intencional (migas/clic derecho/Esc). */
+            let calProfHist = 0;
+            let calSaltoHistorial = false;
+            let calVistaRastro = null;    /* v0.72: última vista con rastro sincronizado (null = aún ninguna) */
+            let calPorPopstate = false;   /* v0.72: datesSet no debe tocar el historial si el cambio vino de un popstate */
             /* v0.25.34: cierre animado del panel lateral — estado de la animación en curso */
             let calPanelCierreFin = null, calPanelCierreTimer = null;
 
@@ -11395,7 +11403,24 @@
                     origen = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
                 }
                 calAnimPendiente = { origen: origen, saliendo: idxB < idxA };
+                /* v0.72: el rastro del historial NO se gestiona aquí — datesSet es el único punto por
+                   donde pasa TODO cambio de vista (migas, clic derecho, Esc y los botones Semana/Mes/
+                   Año del toolbar), así el gesto atrás funciona sea cual sea el camino usado. */
                 miCalendario.changeView(vista, fecha);
+            }
+
+            /* v0.72: la pila del historial refleja el nivel — Mes es la base (0 entradas); Semana y Año
+               dejan 1 entrada para que «atrás» regrese a Mes antes de salir de la app. El salto directo
+               Semana↔Año re-etiqueta la entrada con replaceState. El pop de un consumo intencional se
+               marca con calSaltoHistorial para que el listener de popstate no re-navegue. */
+            function calSincronizarRastro(idxB) {
+                if (idxB < 0) return;
+                const profNueva = (idxB === 1) ? 0 : 1;
+                try {
+                    if (profNueva > calProfHist) { history.pushState({ cal: idxB }, ''); calProfHist = profNueva; }
+                    else if (profNueva < calProfHist) { calSaltoHistorial = true; calProfHist = profNueva; history.back(); }
+                    else if (profNueva === 1) { history.replaceState({ cal: idxB }, ''); }
+                } catch (e) { calProfHist = 0; }
             }
 
             function calAnimarEntrada() {
@@ -11466,6 +11491,15 @@
                         else if (vista === 'timeGridWeek') { triggerHaptic(); calPanelAbrirDia(kbFechaDesdeDate(info.date, false)); }   /* v0.25.26: el panel del día reemplaza a la vista Día */
                     },
                     datesSet: function(info) {
+                        /* v0.72: ÚNICO punto de sync del rastro — cubre migas, clic derecho, Esc y los
+                           botones Semana/Mes/Año del toolbar (que no pasan por calZoomHacia). Solo
+                           actúa cuando CAMBIA el tipo de vista; prev/next/today no tocan el historial. */
+                        const tRastro = info.view.type;
+                        if (tRastro !== calVistaRastro) {
+                            if (calPorPopstate) { calPorPopstate = false; }
+                            else calSincronizarRastro(calNivelDe(tRastro));
+                            calVistaRastro = tRastro;
+                        }
                         calPintarMigas(info);
                         calAnimarEntrada();   /* v0.25.26: sin vista Día → fuera el select-drag y su toggle de selectable */
                     },
@@ -11508,7 +11542,66 @@
                     if (!mes || !mes.dataset.date) return;
                     calZoomHacia('dayGridMonth', new Date(mes.dataset.date + 'T00:00:00'), ev);
                 });
+
+                /* v0.72: clic derecho = subir un nivel (solo escritorio; el long-press de Android dispara
+                   contextmenu y NO debe navegar). Sobre una tarjeta de evento el menú nativo se conserva
+                   (Opción A). En el Año, nivel máximo: solo se calla el menú, no navega. */
+                calendarEl.addEventListener('contextmenu', function(ev) {
+                    try { if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return; } catch (e) { return; }
+                    if (!miCalendario) return;
+                    if (ev.target.closest && ev.target.closest('.fc-event')) return;
+                    ev.preventDefault();
+                    const act = calNivelDe(miCalendario.view.type);
+                    if (act <= 0) return;
+                    triggerHaptic();
+                    calZoomHacia(CAL_NIVELES[act - 1].vista, miCalendario.getDate(), ev);
+                });
+
+                /* v0.72: Esc también sube un nivel — calendario activo, sin diálogos (los diálogos siguen
+                   SIN Esc: decisión de la v0.39 intacta) y sin campo de texto enfocado. Si el panel
+                   lateral del día/item está abierto, Esc lo cierra primero. */
+                document.addEventListener('keydown', function(ev) {
+                    if (ev.key !== 'Escape') return;
+                    if (!miCalendario) return;
+                    const vAgenda = document.getElementById('vistaAgenda');
+                    if (!vAgenda || vAgenda.classList.contains('hidden')) return;
+                    if (mDlgPila.length) return;
+                    const cm = document.getElementById('customModal');
+                    if (cm && !cm.classList.contains('hidden')) return;
+                    const t = ev.target;
+                    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+                    if (calPanelModo) { calPanelCerrar(); return; }
+                    const act = calNivelDe(miCalendario.view.type);
+                    if (act <= 0) return;
+                    triggerHaptic();
+                    calZoomHacia(CAL_NIVELES[act - 1].vista, miCalendario.getDate(), null);
+                });
             }
+
+            /* v0.72: «atrás» del navegador y de Android (gesto o botón emiten el mismo evento) —
+               si el pop consumió un rastro del calendario (o llegó a la base), sube el nivel que
+               corresponda. El listener de los MODALES corre primero (se registró antes): con un
+               diálogo abierto, «atrás» lo cierra a él y este listener no secuestra la navegación.
+               Si el calendario no es la vista activa, no navega — pero el rastro se consume igual. */
+            window.addEventListener('popstate', function(ev) {
+                if (!miCalendario) return;
+                const st = (ev && ev.state) || null;
+                const conRastro = !!(st && typeof st.cal === 'number');
+                if (calSaltoHistorial) {
+                    calSaltoHistorial = false;
+                    calProfHist = conRastro ? 1 : 0;
+                    return;
+                }
+                calProfHist = conRastro ? 1 : 0;
+                const vAgenda = document.getElementById('vistaAgenda');
+                if (!vAgenda || vAgenda.classList.contains('hidden')) return;
+                const vistaLlegada = CAL_NIVELES[conRastro ? st.cal : 1].vista;   /* sin rastro = base = Mes */
+                if (miCalendario.view.type !== vistaLlegada) {
+                    try { if (calPanelModo) calPanelCerrar(); } catch (e) {}   /* el panel del día/item se cierra antes de subir el nivel */
+                    calPorPopstate = true;   /* datesSet no re-sincroniza: el pop ya se hizo */
+                    calZoomHacia(vistaLlegada, miCalendario.getDate(), null);
+                }
+            });
 
             /* ==================================================
                v0.25.26 — PANEL LATERAL DEL CALENDARIO
