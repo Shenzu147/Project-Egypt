@@ -1677,6 +1677,14 @@
                                     <span class="info-anchor flex flex-shrink-0 -mt-0.5" data-info-anchor></span>
                                 </div>
                                 <div class="flex items-center gap-1.5 flex-shrink-0">
+                                    <!-- v0.70: período del widget (propio del tablero, no lo comparte): Hoy / Mes / Año / Todo.
+                                         En «Todo» se ven también las cerradas y las de meses pasados — para limpiar atraso. -->
+                                    <select id="selPerActividades" onchange="kbSetPerWidget(this.value)" title="Período de las actividades" data-i18n-title="ho.ac.perTitulo" class="sel-maatly text-xs font-bold px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 focus:outline-none focus:border-indigo-500 cursor-pointer max-w-[6.5rem]">
+                                        <option value="hoy" data-i18n="cal.btn.hoy">Hoy</option>
+                                        <option value="mes" data-i18n="cal.btn.mes">Mes</option>
+                                        <option value="anio" data-i18n="cal.btn.anio">Año</option>
+                                        <option value="todo" data-i18n="kb.seg.todo">Todo</option>
+                                    </select>
                                     <span id="badgeCantActividades" class="text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-full">0</span>
                                     <button id="btnFiltroActividades" onclick="kbToggleFiltroActividades()" title="Filtrar y ordenar actividades" data-i18n-title="ho.ac.titFiltro" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-xs transition-colors flex items-center justify-center"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
                                 </div>
@@ -2418,7 +2426,7 @@
         wdInstalar();
 
         /* v0.25.15: ÚNICA fuente de la versión — badge XLSX + línea en Configuración→Datos + toast de cambio de versión */
-        const VER_APP = 'v0.69';   /* v0.69: la sync propaga EDICIONES — LWW por ítem (`mod` ISO sellado al guardar; gana el más nuevo, las tumbas siguen mandando; sin `mod` gana el local) · v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
+        const VER_APP = 'v0.70';   /* v0.70: el widget de Actividades del panel abre el DETALLE de la tarea/evento al tocar la fila (modal actual) + selector de período propio Hoy/Mes/Año/Todo (viaja en el perfil; en «Todo» entran las cerradas y las de meses pasados) · v0.69: la sync propaga EDICIONES — LWW por ítem (`mod` ISO sellado al guardar; gana el más nuevo, las tumbas siguen mandando; sin `mod` gana el local) · v0.68: «cerrar en un toque» — la ✓ del pie de la tarjeta (y de la lista del panel) manda la actividad DIRECTO a la columna de Cierre, reusando el aviso de dinero, la recurrencia y el Deshacer · v0.67: el tablero se mueve con el dedo — pill de estado + hoja «Mover a…», aviso antes de registrar en «Cierre», «Deshacer» en el toast, arrastre entre columnas apagado por defecto en móvil (clon propio, sin snap mientras se arrastra, columnas 78vw) · v0.66: arranque en BLANCO (la demo solo por el botón de Ajustes), tema Claro por defecto y sincronizado entre aparatos, manifest + service worker declarados en el <head> (WebAPK en vez de atajo) · v0.65: el ⓘ de las 12 tarjetas del panel vive EN FLUJO en la fila del título (alineado en PC y móvil) + área táctil de 36px · v0.64: deudas i18n (fechas por mesLoc, XLSX bilingüe con respaldos viejos intactos, coach en el idioma de la app, TDZ del registro de modelos) · v0.62.1: sin sello flotante de Netlify (iframe #nl-badge-frame oculto por CSS) · v0.62: abre sin internet (SW precachea el shell tolerando el 301 de Netlify + Tailwind/fuentes; la sync sube lo escrito al volver la red) · v0.61: el panel se ve bien en cualquier pantalla (container queries + cifras fluidas + área táctil invisible)
 
         /* v0.56 · Supabase I2a «Cuentas» — login OPCIONAL. La nube NO toca tus datos: solo la cuenta.
            Pega aquí la URL del proyecto y la anon key (Settings → API de Supabase; la service key
@@ -4334,7 +4342,7 @@
         const PERFIL_IDIOMAS = ['es', 'en'];
         const PERFIL_PLANES = ['basico', 'premium', 'admin'];
         const PERFIL_ESTILOS = ['suave', 'equilibrado', 'estricto'];
-        const PERFIL_DEF = { v: 1, nombre: '', idioma: 'es', plan: 'basico', estilo: 'equilibrado', pais: '', snapAuto: true };   /* v0.58: snapAuto = copia automática en la nube (I2b), default ON */
+        const PERFIL_DEF = { v: 1, nombre: '', idioma: 'es', plan: 'basico', estilo: 'equilibrado', pais: '', snapAuto: true, kbPerWidget: 'mes' };   /* v0.58: snapAuto = copia automática en la nube (I2b), default ON · v0.70: kbPerWidget = período del widget de Actividades del panel (viaja en la sync) */
         /* v0.51: catálogo de países del perfil — [code, nombre ES, nombre EN]. Solo texto (sin banderas ni emojis).
            Son los 20 países que hoy mapean limpio a las monedas del catálogo MONEDAS; la lista crece por entrega. */
         const PAIS_LISTA = [
@@ -4366,6 +4374,7 @@
             if (PERFIL_IDIOMAS.indexOf(p.idioma) < 0) p.idioma = 'es';
             if (PERFIL_PLANES.indexOf(p.plan) < 0) p.plan = 'basico';
             if (PERFIL_ESTILOS.indexOf(p.estilo) < 0) p.estilo = 'equilibrado';
+            if (['hoy', 'mes', 'anio', 'todo'].indexOf(p.kbPerWidget) < 0) p.kbPerWidget = 'mes';   /* v0.70: período del widget de Actividades */
             if (typeof p.nombre !== 'string') p.nombre = '';
             if (typeof p.pais !== 'string') p.pais = '';
             if (p.pais && !PAIS_LISTA.some(function(f) { return f[0] === p.pais; })) p.pais = '';   /* v0.51: país fuera del catálogo = sin país (descorruptora) */
@@ -4374,7 +4383,7 @@
         }
         function perfilSet(patch) {
             const cambios = {};
-            ['nombre', 'idioma', 'plan', 'estilo', 'pais', 'snapAuto', 'syncAuto'].forEach(function(k) { if (patch && patch[k] !== undefined) cambios[k] = patch[k]; });   /* v0.58: snapAuto / v0.59: syncAuto viajan dentro de maatlyPerfil — 0 claves de storage nuevas */
+            ['nombre', 'idioma', 'plan', 'estilo', 'pais', 'snapAuto', 'syncAuto', 'kbPerWidget'].forEach(function(k) { if (patch && patch[k] !== undefined) cambios[k] = patch[k]; });   /* v0.58: snapAuto / v0.59: syncAuto / v0.70: kbPerWidget viajan dentro de maatlyPerfil — 0 claves de storage nuevas */
             const nuevo = Object.assign(perfilGet(), cambios);
             nuevo.v = 1;
             try { localStorage.setItem(K_PERFIL, JSON.stringify(nuevo)); } catch (e) {
@@ -4956,6 +4965,7 @@
                 'ho.ac.tit': 'Actividades',
                 'ho.ac.sub': 'Las mismas del tablero',
                 'ho.ac.titFiltro': 'Filtrar y ordenar actividades',
+                'ho.ac.perTitulo': 'Período de las actividades mostradas',
                 'ho.ac.ordenarPor': 'Ordenar por',
                 'ho.ac.solo': 'Las columnas del tablero aparecen aquí solas',
                 'ho.nt.tit': 'Notas',
@@ -6013,6 +6023,7 @@
                 'ho.ac.tit': 'Activities',
                 'ho.ac.sub': 'The same ones as the board',
                 'ho.ac.titFiltro': 'Filter and sort activities',
+                'ho.ac.perTitulo': 'Time period of the activities shown',
                 'ho.ac.ordenarPor': 'Sort by',
                 'ho.ac.solo': 'Board columns show up here on their own',
                 'ho.nt.tit': 'Notes',
@@ -9382,6 +9393,16 @@
             kbMoverTarjeta(id, estadoId);
         };
 
+        /* v0.70: período del widget de Actividades del panel — Hoy/Mes/Año/Todo, INDEPENDIENTE del
+           tablero. Se guarda en el perfil (maatlyPerfil.kbPerWidget) para que viaje en la sync. */
+        window.kbSetPerWidget = (p) => {
+            if (['hoy', 'mes', 'anio', 'todo'].indexOf(p) === -1) return;
+            kbPerWidget = p;
+            try { perfilSet({ kbPerWidget: p }); } catch (e) {}
+            triggerHaptic();
+            renderizarActividades();
+        };
+
         window.kbWidgetEliminar = (id) => {
             triggerHaptic();
             showModal('<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11v6M14 11v6"></path></svg>' + ti('kb.modalTit'), ti('kb.modalBody'), ti('kb.modalBtn'), 'bg-red-600 hover:bg-red-700', () => {
@@ -9397,14 +9418,32 @@
             const badge = document.getElementById('badgeCantActividades');
             if (!cont) return;
 
+            /* v0.70: el select del header refleja el período vivo (repintado de i18n incluido) */
+            const selPer = document.getElementById('selPerActividades');
+            if (selPer && selPer.value !== kbPerWidget) selPer.value = kbPerWidget;
+
             const estados = kbGetEstados();
             const idCierreW = kbIdCierre();   /* v0.68: la ✓ «cerrar» del widget no aparece si ya está en Cierre */
             // v0.13: filtro por estado (dinámico) + vencidas, y orden por fecha / nombre / estado
             let acts = kbGetActividades();
             const totalActs = acts.length;
-            const filtroActivo = (kbFiltroWidget.estados && kbFiltroWidget.estados.length) || kbFiltroWidget.vencidas;
+            const filtroActivo = (kbFiltroWidget.estados && kbFiltroWidget.estados.length) || kbFiltroWidget.vencidas || kbPerWidget !== 'todo';
             if (kbFiltroWidget.estados && kbFiltroWidget.estados.length) acts = acts.filter(a => kbFiltroWidget.estados.indexOf(a.estadoId) !== -1);
             if (kbFiltroWidget.vencidas) acts = acts.filter(a => kbEsVencida(a));
+            /* v0.70: filtro por período del widget — mismas reglas del tablero (kbTarjetasFiltradas):
+               sin fecha siempre visible; «Todo» no filtra (entran las cerradas y las de meses pasados) */
+            if (kbPerWidget !== 'todo') {
+                const w = new Date();
+                const wy = w.getFullYear(), wm = w.getMonth(), wd = w.getDate();
+                acts = acts.filter(function(a) {
+                    if (!a.fecha) return true;
+                    const f = new Date(String(a.fecha).slice(0, 10) + 'T00:00:00');
+                    if (isNaN(f)) return true;
+                    if (kbPerWidget === 'hoy') return f.getFullYear() === wy && f.getMonth() === wm && f.getDate() === wd;
+                    if (kbPerWidget === 'mes') return f.getFullYear() === wy && f.getMonth() === wm;
+                    return f.getFullYear() === wy;   /* anio */
+                });
+            }
             acts = acts.slice().sort((a, b) => {
                 if (kbFiltroWidget.orden === 'nombre') return String(a.titulo || '').localeCompare(String(b.titulo || ''), (idiomaApp() === 'en' ? 'en' : 'es'));   /* v0.52: collation del idioma vivo */
                 if (kbFiltroWidget.orden === 'estado') {
@@ -9429,10 +9468,13 @@
                 const fechaFmt = a.fecha ? kbFmtFechaCorta(a.fecha) : ti('kb.sinFecha');
 
                 const item = document.createElement('div');
-                item.className = 'flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-xl transition-colors border border-slate-100 dark:border-slate-700/80 group gap-2' + (a.pausada ? ' kb-pausada' : '');
+                /* v0.70: TODA la fila abre el detalle (modal de la actividad). Los controles que
+                   viven dentro (punto, select de estado, ✓, eliminar) hacen stopPropagation. */
+                item.className = 'cursor-pointer flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-xl transition-colors border border-slate-100 dark:border-slate-700/80 group gap-2' + (a.pausada ? ' kb-pausada' : '');
+                item.onclick = function() { triggerHaptic(); abrirModalActividad(a.id); };
                 item.innerHTML = `
                     <div class="flex items-center gap-3 overflow-hidden flex-1">
-                        <button onclick="abrirModalActividad('${a.id}')" class="w-3 h-3 rounded-full flex-shrink-0 hover:scale-125 transition-transform ring-2 ring-offset-1 ring-transparent hover:ring-slate-300 dark:hover:ring-slate-600" style="background: ${tipo.colorVar}" title="${kbEscape(tiPlantilla('kb.titEditar', { tipo: kbTipoNombre(tipo) }))}"></button>
+                        <button onclick="event.stopPropagation(); abrirModalActividad('${a.id}')" class="w-3 h-3 rounded-full flex-shrink-0 hover:scale-125 transition-transform ring-2 ring-offset-1 ring-transparent hover:ring-slate-300 dark:hover:ring-slate-600" style="background: ${tipo.colorVar}" title="${kbEscape(tiPlantilla('kb.titEditar', { tipo: kbTipoNombre(tipo) }))}"></button>
                         <div class="truncate flex-1">
                             <div class="flex items-center gap-2 mb-0.5">
                                 <span class="text-xs font-extrabold flex-shrink-0" style="color: ${tipo.colorVar}">${tipo.icono ? tipo.icono + ' ' : ''}${kbTipoNombre(tipo)}</span>
@@ -9442,14 +9484,15 @@
                             <div class="flex items-center gap-2 text-xs font-medium">
                                 <span class="${vencida ? 'c-alarma font-extrabold' : 'text-slate-400'}"><svg class="w-3 h-3 inline-block align-middle mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${fechaFmt}</span>
                                 <span class="text-slate-400">•</span>
-                                <select onchange="kbWidgetEstado('${a.id}', this.value)" class="sel-maatly sel-maatly-pill text-xs font-extrabold px-2 py-0.5 rounded-full border cursor-pointer focus:outline-none bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700">
+                                <select onchange="kbWidgetEstado('${a.id}', this.value)" onclick="event.stopPropagation()" class="sel-maatly sel-maatly-pill text-xs font-extrabold px-2 py-0.5 rounded-full border cursor-pointer focus:outline-none bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700">
                                     ${estados.map(e => `<option value="${e.id}" ${e.id === a.estadoId ? 'selected' : ''}>${kbEscape(e.nombre)}</option>`).join('')}
                                 </select>
                                 ${idCierreW && a.estadoId !== idCierreW ? `<button type="button" class="kb-cerrar flex-shrink-0" title="${ti('kb.cerrarTitle')}" aria-label="${kbEscape(tiPlantilla('kb.cerrarAria', { t: a.titulo }))}" onclick="event.stopPropagation(); kbCompletarRapido('${a.id}')"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg></button>` : ''}
+                                ${idCierreW && a.estadoId === idCierreW ? `<span class="kb-chip-cierre">${kbEscape(ti('kb.col.cierre'))}</span>` : ''}
                             </div>
                         </div>
                     </div>
-                    <button class="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 transition-opacity text-xs flex-shrink-0" title="${ti('kb.titEliminar')}" onclick="kbWidgetEliminar('${a.id}')">
+                    <button onclick="event.stopPropagation(); kbWidgetEliminar('${a.id}')" class="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 transition-opacity text-xs flex-shrink-0" title="${ti('kb.titEliminar')}">
                         <svg class="w-3.5 h-3.5 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11v6M14 11v6"></path></svg>
                     </button>
                 `;
@@ -9493,6 +9536,7 @@
         let kanbanEstados = null;
         let kanbanActividades = null;
         let kanbanPeriodo = 'mes';
+        let kbPerWidget = (function() { try { return perfilGet().kbPerWidget; } catch (e) { return 'mes'; } })();   /* v0.70: período del widget de Actividades del panel (independiente del tablero; se sincroniza vía perfilGet().kbPerWidget) */
         let kanbanRef = null;
         let kbSortables = [];
         let kbDemoSembrada = false;   /* v0.25.35: la demo recién sembrada no dispara la revisión del mes */
